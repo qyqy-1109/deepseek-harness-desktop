@@ -16,7 +16,7 @@
 
 ### 第 1 步:拿到安装包
 
-从发布者处获取 `DeepSeek Harness Desktop Setup 0.1.1.exe`(约 154MB),或从 [GitHub Releases](../../releases) 下载。
+从发布者处获取 `DeepSeek Harness Desktop Setup 0.1.3.exe`(约 176MB),或从 [GitHub Releases](../../releases) 下载。
 
 ### 第 2 步:安装
 
@@ -145,6 +145,7 @@ dsh-codex-desktop/
 │   └── dsh-server.mjs        纯 Node 模块:dsh 命令解析 / 拉起 / 健康探测 / 清理
 ├── preload.js                preload 桩(隔离配置)
 ├── plugin/dsh-codex-flavor/  DSH client 插件:Codex 风味点缀(见其 README)
+├── plugin/dsh-background/    DSH client 插件:背景图片图库(见其 README)
 ├── scripts/
 │   ├── make-icon.mjs         图标生成(官方鲸鱼)
 │   ├── prepare-vendor.mjs    把 dsh 依赖树装进 vendor/(打包前置)
@@ -207,12 +208,43 @@ dsh plugin --profile web remove dsh-codex-flavor
 
 ---
 
-## 🧪 四、验证清单
+## 🎨 四、背景图片插件
+
+`plugin/dsh-background/` 在 **设置 → 通用** 增加「背景」行:
+
+- **上传图片** — 上传本地图片,自动压缩并**保存到图库(最多 3 张)**;点击缩略图切换当前背景,`×` 删除单张;
+- **透明度 / 模糊**滑杆实时调节背景效果;
+- **跟随外观** — 清除当前背景;
+- 选择持久保存(localStorage),刷新/重启保留。
+
+背景以固定层显示在主内容区与侧边栏的**半透明底**上,消息等内层表面保持不透明以保证可读性。
+
+安装:
+
+```bash
+cd plugin/dsh-background
+dsh plugin --profile web add -w <本目录绝对路径>   # -w 必需(profile 是 pnpm workspace 根)
+```
+
+然后重启 dsh web 生效;此后修改 `lib/client.js` 只需刷新页面。
+
+---
+
+## 🧪 五、验证清单
 
 - 插件:`dsh --profile web --dump-config` 出现 `dsh-codex-flavor` 层;
 - 浏览器开发者工具 → Network 可见 `/plugins/dsh-codex-flavor/client.js?rev=...` 返回 200;
 - 深浅色切换后,深色模式代码块呈现终端面板质感,其余界面保持 DSH 原风格;
 - 桌面应用:无 `dsh web` 运行时双击图标,应用自动拉起服务并打开窗口;退出应用后服务一并停止(仅限应用自己拉起的实例)。
+
+## 🙏 致谢 / Acknowledgements
+
+本项目站在以下开源知识与项目之上,特此致谢:
+
+- **[KinGao294/dsh-skin](https://github.com/KinGao294/dsh-skin)** — 背景图片插件的**直接架构范本**:`ctx.theme.register` 注册主题、`ctx.theme.overrideTokens` 半透明化主画布/侧边栏、`z-index:-1` 固定背景层、localStorage 持久化,以及"第三方 settings 命名空间不在 Host 白名单(`WEB_SETTINGS_NAMESPACES`)内"等平台边界知识;
+- **[deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)** — DeepSeek Harness 本身:客户端插件契约(`dsh.bundle` / `dsh.client` / 双面导出)、`--dsw-*` 设计 token 体系、`__ModuleLoader__` bundle 格式、设置槽位(`settings.general.item`)等均以其正式版实现为准;
+- **[dsh-external/dsh-agent-teams](https://github.com/NanmiCoder/dsh-agent-teams)(公开镜像)** — 其 `dsh-plugin-development` 开发 Skill 指导了本项目插件开发的完整流程(契约、取证、验证矩阵);
+- **[Electron](https://www.electronjs.org/)** 与 **[electron-builder](https://www.electron.build/)** — 桌面壳与打包;**[npmmirror](https://npmmirror.com/)** 提供了国内可用的二进制镜像。
 
 ## 📄 许可
 
