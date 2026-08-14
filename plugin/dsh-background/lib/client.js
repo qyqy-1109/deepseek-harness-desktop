@@ -3,18 +3,19 @@
  * loader format; architecture modeled on the proven dsh-skin plugin).
  *
  * Adds a "背景 / Background" row to Settings → General:
- *   跟随外观 (follow) — no wallpaper (built-in appearance)
- *   上传图片 (image)  — pick a local image; stored as a compressed data URL
- *                       and rendered as a fixed backdrop behind translucent
- *                       main canvas + sidebar (opacity/blur adjustable)
+ *   - 跟随外观 (follow) — clear the active wallpaper
+ *   - 上传图片 (image)  — upload a local image (compressed data URL)
+ *   - 已保存图片 gallery — up to 3 saved wallpapers; click a thumbnail to
+ *     make it current, × to delete it, empty slots offer the picker
+ *   - opacity / blur sliders tune the active wallpaper
  *
  * Persistence is localStorage (third-party settings namespaces are not
- * exposed over the wire). The client bundle requires only module-table
- * entities (react, react/jsx-runtime, @deepseek-ai/dsh-client-runtime/client).
+ * exposed over the wire). Images are compressed to ~≤0.9MB each so 3 saved
+ * wallpapers stay well inside the localStorage quota (~2.7MB of 5MB).
+ * The client bundle requires only module-table entities.
  *
- * NOTE on re-entrancy: the wallpaper's token override publishes theme/change,
- * which this plugin also listens to (to re-shade after a scheme/skin switch).
- * A re-entrancy guard (inShade) keeps that from recursing into itself.
+ * Re-entrancy: the wallpaper's token override publishes theme/change, which
+ * this plugin also listens to; the inShade guard prevents recursion.
  */
 window.__ModuleLoader__.load({
   id: "dsh-background",
@@ -28,10 +29,12 @@ window.__ModuleLoader__.load({
 
     /* ── constants ────────────────────────────────────────────────────── */
     const SETTINGS_NS = "settings.background";
-    const IMAGE_KEY = "dsh-background:image"; // data URL (presence = image mode)
+    const IMAGES_KEY = "dsh-background:images"; // JSON array of data URLs (≤3)
+    const CURRENT_KEY = "dsh-background:current"; // active index, -1 = none
     const OPACITY_KEY = "dsh-background:opacity"; // 0..1
     const BLUR_KEY = "dsh-background:blur"; // px 0..60
     const OVERRIDE_SOURCE = "dsh-background:wallpaper";
+    const MAX_IMAGES = 3;
     const DEFAULT_OPACITY = 0.8;
     const DEFAULT_BLUR = 0;
 
@@ -40,21 +43,23 @@ window.__ModuleLoader__.load({
       "title": "背景",
       "follow": "跟随外观",
       "image": "上传图片",
-      "choose": "选择图片",
-      "remove": "移除图片",
+      "saved": "已保存图片",
+      "addSlot": "添加",
+      "remove": "移除",
       "opacity": "透明度",
       "blur": "模糊",
-      "hint": "图片显示在主内容区与侧边栏的半透明底上，消息等内层表面保持不透明以保证可读性",
+      "hint": "上传的图片会保存在这里(最多 3 张)。点击缩略图切换当前背景；主内容区与侧边栏呈半透明露出图片，消息等内层表面保持不透明以保证可读性",
     };
     const en = {
       "title": "Background",
       "follow": "Follow theme",
       "image": "Upload image",
-      "choose": "Choose image",
+      "saved": "Saved images",
+      "addSlot": "Add",
       "remove": "Remove",
       "opacity": "Opacity",
       "blur": "Blur",
-      "hint": "The image shows through the translucent main canvas and sidebar; inner surfaces stay opaque for readability",
+      "hint": "Uploaded images are saved here (up to 3). Click a thumbnail to switch the active wallpaper; the main canvas and sidebar turn translucent so the image shows through, while inner surfaces stay opaque for readability",
     };
 
     /* ── persistence ──────────────────────────────────────────────────── */
@@ -74,9 +79,24 @@ window.__ModuleLoader__.load({
         // storage unavailable / quota — the preference stays process-local
       }
     }
-    function readImage() {
-      const value = readStorage(IMAGE_KEY);
-      return value !== null && value.length > 0 ? value : null;
+    function readImages() {
+      const raw = readStorage(IMAGES_KEY);
+      if (raw === null) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((item) => typeof item === "string" && item.length > 0).slice(0, MAX_IMAGES);
+      } catch {
+        return [];
+      }
+    }
+    function writeImages(images) {
+      writeStorage(IMAGES_KEY, JSON.stringify(images.slice(0, MAX_IMAGES)));
+    }
+    function readCurrent() {
+      const raw = readStorage(CURRENT_KEY);
+      const value = Number(raw);
+      return Number.isInteger(value) && value >= 0 && value < MAX_IMAGES ? value : -1;
     }
     function readOpacity() {
       const raw = readStorage(OPACITY_KEY);
@@ -89,6 +109,12 @@ window.__ModuleLoader__.load({
       if (raw === null) return DEFAULT_BLUR;
       const value = Number(raw);
       return Number.isFinite(value) ? Math.min(60, Math.max(0, value)) : DEFAULT_BLUR;
+    }
+    /** The active wallpaper data URL, or null. */
+    function activeWallpaper() {
+      const images = readImages();
+      const current = readCurrent();
+      return current >= 0 && current < images.length ? images[current] : null;
     }
 
     /* ── wallpaper layer + token shading ──────────────────────────────── */
@@ -119,7 +145,7 @@ window.__ModuleLoader__.load({
 
     /** Make the main canvas + sidebar translucent so the backdrop shows. */
     function shadeTokens(ctx) {
-      if (inShade) return; // we are already inside a theme/change cascade
+      if (inShade) return;
       inShade = true;
       try {
         const snapshot = ctx.theme.getTheme();
@@ -141,9 +167,9 @@ window.__ModuleLoader__.load({
       }
     }
 
-    /** Apply (or clear) the wallpaper layer and its token shading. */
+    /** Apply (or clear) the active wallpaper layer and its token shading. */
     function applyWallpaper(ctx) {
-      const url = readImage();
+      const url = activeWallpaper();
       if (url === null) {
         wallpaperEl?.remove();
         wallpaperEl = null;
@@ -170,7 +196,7 @@ window.__ModuleLoader__.load({
       wallpaperOverrideDispose = null;
     }
 
-    /* ── image compression (keep inside the localStorage quota) ───────── */
+    /* ── image compression (3 × ~0.9MB stays inside the localStorage quota) ─ */
     function compressImage(image, maxSide, quality) {
       const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
       const canvas = document.createElement("canvas");
@@ -188,9 +214,9 @@ window.__ModuleLoader__.load({
         image.onerror = () => onDone(null);
         image.onload = () => {
           try {
-            let dataUrl = compressImage(image, 1600, 0.75);
-            if (dataUrl.length > 2000000) dataUrl = compressImage(image, 1000, 0.6);
-            if (dataUrl.length > 2000000) dataUrl = compressImage(image, 800, 0.5);
+            let dataUrl = compressImage(image, 1400, 0.7);
+            if (dataUrl.length > 900000) dataUrl = compressImage(image, 1000, 0.6);
+            if (dataUrl.length > 900000) dataUrl = compressImage(image, 800, 0.5);
             onDone(dataUrl);
           } catch {
             onDone(null);
@@ -205,15 +231,17 @@ window.__ModuleLoader__.load({
     function createStore() {
       return defineStore({
         init: () => ({
-          image: null,
+          images: [],
+          current: -1,
           opacity: DEFAULT_OPACITY,
           blur: DEFAULT_BLUR,
           revision: -1,
         }),
         actions: {
-          sync: (d, image, opacity, blur, revision) => {
+          sync: (d, images, current, opacity, blur, revision) => {
             if (revision <= d.revision) return;
-            d.image = image;
+            d.images = images;
+            d.current = current;
             d.opacity = opacity;
             d.blur = blur;
             d.revision = revision;
@@ -226,6 +254,7 @@ window.__ModuleLoader__.load({
     const styles = {
       group: { borderBottom: "1px solid var(--dsw-alias-border-l2)", display: "flex", flexDirection: "column", gap: "10px", padding: "16px 0" },
       title: { color: "var(--dsw-alias-label-primary)", fontSize: "14px", fontWeight: 400, lineHeight: "22px" },
+      subTitle: { color: "var(--dsw-alias-label-secondary)", fontSize: "13px", lineHeight: "20px" },
       hint: { color: "var(--dsw-alias-label-tertiary)", fontSize: "12px", lineHeight: "18px" },
       grid: { display: "flex", flexWrap: "wrap", gap: "10px" },
       card: { display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", width: "96px", padding: "3px", borderRadius: "10px", border: "2px solid transparent", background: "transparent", cursor: "pointer", font: "inherit", boxSizing: "border-box" },
@@ -235,10 +264,13 @@ window.__ModuleLoader__.load({
       swatch: { width: "100%", height: "52px", borderRadius: "8px", boxSizing: "border-box", padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", gap: "6px" },
       swatchLine: { height: "7px", borderRadius: "4px" },
       defaultSwatch: { width: "100%", height: "52px", borderRadius: "8px", boxSizing: "border-box", display: "flex", overflow: "hidden", border: "1px solid var(--dsw-alias-border-l2)" },
-      preview: { width: "72px", height: "44px", objectFit: "cover", borderRadius: "6px", border: "1px solid var(--dsw-alias-border-l2)" },
+      gallery: { display: "flex", flexWrap: "wrap", gap: "10px" },
+      slot: { position: "relative", width: "96px", height: "60px", borderRadius: "8px", overflow: "hidden", padding: "0", border: "2px solid var(--dsw-alias-border-l2)", background: "transparent", cursor: "pointer", boxSizing: "border-box" },
+      slotSelected: { borderColor: "var(--dsw-alias-brand-primary)" },
+      slotImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+      slotRemove: { position: "absolute", top: "4px", right: "4px", width: "18px", height: "18px", borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: "12px", lineHeight: "18px", cursor: "pointer", padding: "0" },
+      slotAdd: { display: "flex", alignItems: "center", justifyContent: "center", color: "var(--dsw-alias-label-tertiary)", fontSize: "22px", borderStyle: "dashed" },
       actionRow: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" },
-      button: { height: "32px", padding: "0 14px", borderRadius: "8px", border: "1px solid var(--dsw-alias-border-l2)", background: "var(--dsw-alias-button-elevated-fill)", color: "var(--dsw-alias-label-primary)", cursor: "pointer", fontSize: "13px", font: "inherit", boxSizing: "border-box" },
-      buttonDanger: { color: "var(--dsw-alias-state-error-primary)" },
       sliderRow: { display: "flex", alignItems: "center", gap: "10px", minWidth: "240px" },
       sliderLabel: { color: "var(--dsw-alias-label-secondary)", fontSize: "13px", whiteSpace: "nowrap", width: "52px" },
       slider: { flex: 1, accentColor: "var(--dsw-alias-brand-primary)" },
@@ -252,7 +284,6 @@ window.__ModuleLoader__.load({
           children: [jsxRuntime.jsx("div", { style: { flex: 1, background: "#f4f4f5" } }), jsxRuntime.jsx("div", { style: { flex: 1, background: "#1c1c20" } })],
         });
       }
-      // image: photo-like gradient
       return jsxRuntime.jsx("div", {
         style: { ...styles.swatch, background: "linear-gradient(135deg,#5686FE 0%,#4176E6 40%,#3fbf7f 70%,#f2c14e 100%)", border: "1px solid rgba(255,255,255,0.2)" },
         children: [jsxRuntime.jsx("div", { style: { ...styles.swatchLine, width: "55%", background: "rgba(255,255,255,0.85)" } })],
@@ -270,7 +301,7 @@ window.__ModuleLoader__.load({
       });
     }
 
-    function BackgroundRow({ t, useStore, setWallpaper, clearWallpaper, setOpacity, setBlur }) {
+    function BackgroundRow({ t, useStore, setWallpaper, setCurrent, clearWallpaper, removeImage, setOpacity, setBlur }) {
       const state = useStore((s) => s);
       const inputRef = React.useRef(null);
       const onFile = (event) => {
@@ -281,15 +312,59 @@ window.__ModuleLoader__.load({
           event.target.value = "";
         });
       };
-      const mode = state.image !== null ? "image" : "follow";
-      const cards = ["follow", "image"];
+      const hasWallpaper = state.current >= 0 && state.current < state.images.length;
+      const slots = [];
+      for (let i = 0; i < MAX_IMAGES; i++) {
+        const image = state.images[i];
+        if (image !== void 0) {
+          slots.push(
+            jsxRuntime.jsxs(
+              "button",
+              {
+                type: "button",
+                onClick: () => setCurrent(i),
+                title: t("saved") + " " + (i + 1),
+                style: { ...styles.slot, ...(state.current === i ? styles.slotSelected : {}) },
+                children: [
+                  jsxRuntime.jsx("img", { src: image, alt: "", style: styles.slotImg }),
+                  jsxRuntime.jsx("button", {
+                    type: "button",
+                    title: t("remove"),
+                    style: styles.slotRemove,
+                    onClick: (event) => {
+                      event.stopPropagation();
+                      removeImage(i);
+                    },
+                    children: "×",
+                  }),
+                ],
+              },
+              `slot-${i}`,
+            ),
+          );
+        } else {
+          slots.push(
+            jsxRuntime.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => inputRef.current?.click(),
+                title: t("image"),
+                style: { ...styles.slot, ...styles.slotAdd },
+                children: "+",
+              },
+              `slot-empty-${i}`,
+            ),
+          );
+        }
+      }
       return jsxRuntime.jsxs("div", {
         style: styles.group,
         children: [
           jsxRuntime.jsx("div", { style: styles.title, children: t("title") }),
           jsxRuntime.jsxs("div", {
             style: styles.grid,
-            children: cards.map((card) =>
+            children: ["follow", "image"].map((card) =>
               jsxRuntime.jsxs(
                 "button",
                 {
@@ -298,23 +373,23 @@ window.__ModuleLoader__.load({
                     if (card === "image") inputRef.current?.click();
                     else clearWallpaper();
                   },
-                  "aria-pressed": mode === card,
-                  style: { ...styles.card, ...(mode === card ? styles.cardSelected : {}) },
+                  "aria-pressed": card === "image" ? state.images.length > 0 : !hasWallpaper,
+                  style: { ...styles.card, ...(card === "image" ? (state.images.length > 0 ? styles.cardSelected : {}) : !hasWallpaper ? styles.cardSelected : {}) },
                   children: [
                     jsxRuntime.jsx(ModeSwatch, { mode: card }),
-                    jsxRuntime.jsx("span", { style: { ...styles.cardLabel, ...(mode === card ? styles.cardLabelSelected : {}) }, children: t(card) }),
+                    jsxRuntime.jsx("span", { style: { ...styles.cardLabel, ...(card === "image" ? (state.images.length > 0 ? styles.cardLabelSelected : {}) : !hasWallpaper ? styles.cardLabelSelected : {}) }, children: t(card) }),
                   ],
                 },
                 card,
               ),
             ),
           }),
-          state.image !== null
+          jsxRuntime.jsx("div", { style: styles.subTitle, children: `${t("saved")} (${state.images.length}/${MAX_IMAGES})` }),
+          jsxRuntime.jsxs("div", { style: styles.gallery, children: slots }),
+          hasWallpaper
             ? jsxRuntime.jsxs("div", {
                 style: styles.actionRow,
                 children: [
-                  jsxRuntime.jsx("img", { src: state.image, alt: "", style: styles.preview }),
-                  jsxRuntime.jsx("button", { type: "button", style: { ...styles.button, ...styles.buttonDanger }, onClick: () => clearWallpaper(), children: t("remove") }),
                   jsxRuntime.jsx(Slider, { label: t("opacity"), value: Math.round(state.opacity * 100), min: 0, max: 100, step: 1, format: (v) => `${v}%`, onChange: setOpacity }),
                   jsxRuntime.jsx(Slider, { label: t("blur"), value: state.blur, min: 0, max: 60, step: 1, format: (v) => `${v}px`, onChange: setBlur }),
                 ],
@@ -335,12 +410,21 @@ window.__ModuleLoader__.load({
       let bound;
       const syncStore = () => {
         revision += 1;
-        bound?.sync(readImage(), readOpacity(), readBlur(), revision);
+        bound?.sync(readImages(), readCurrent(), readOpacity(), readBlur(), revision);
       };
 
       // restore the saved wallpaper
       applyWallpaper(ctx);
       syncStore();
+      // migrate a single image saved by an older plugin version (if any)
+      const legacy = readStorage("dsh-background:image");
+      if (legacy !== null && readImages().length === 0) {
+        writeImages([legacy]);
+        writeStorage(CURRENT_KEY, "0");
+        writeStorage("dsh-background:image", null);
+        applyWallpaper(ctx);
+        syncStore();
+      }
       ctx.effect(
         () => () => {
           teardownWallpaper();
@@ -350,7 +434,7 @@ window.__ModuleLoader__.load({
 
       // keep the row in sync and re-shade after a scheme/skin switch
       ctx.on("theme/change", () => {
-        if (readImage() !== null) applyWallpaper(ctx);
+        if (activeWallpaper() !== null) applyWallpaper(ctx);
         syncStore();
       });
       ctx.effect(() => ctx.locale.register(SETTINGS_NS, { zh, en }), "dsh-background: settings row dictionaries");
@@ -359,13 +443,33 @@ window.__ModuleLoader__.load({
         bound = actions;
         syncStore();
         return {
-          setWallpaper: (url) => {
-            writeStorage(IMAGE_KEY, url);
+          setWallpaper: (dataUrl) => {
+            const images = readImages();
+            images.push(dataUrl);
+            writeImages(images.slice(-MAX_IMAGES)); // keep the newest 3
+            writeStorage(CURRENT_KEY, String(Math.min(MAX_IMAGES - 1, images.length - 1)));
+            applyWallpaper(ctx);
+            syncStore();
+          },
+          setCurrent: (index) => {
+            writeStorage(CURRENT_KEY, String(index));
             applyWallpaper(ctx);
             syncStore();
           },
           clearWallpaper: () => {
-            writeStorage(IMAGE_KEY, null);
+            writeStorage(CURRENT_KEY, "-1");
+            applyWallpaper(ctx);
+            syncStore();
+          },
+          removeImage: (index) => {
+            const images = readImages();
+            if (index < 0 || index >= images.length) return;
+            images.splice(index, 1);
+            writeImages(images);
+            let current = readCurrent();
+            if (current === index) current = -1;
+            else if (current > index) current -= 1;
+            writeStorage(CURRENT_KEY, String(current));
             applyWallpaper(ctx);
             syncStore();
           },
