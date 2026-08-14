@@ -2,7 +2,7 @@
   "name": "dsh-background",
   "version": "0.1.0",
   "private": true,
-  "description": "Background/theme switcher for the DeepSeek Harness Web GUI: a settings row to pick follow-theme / white / black / custom uploaded image, persisted in the Host settings.",
+  "description": "Background wallpaper for the DeepSeek Harness Web GUI: a settings row to upload a custom image (fixed backdrop behind translucent canvas/sidebar, opacity & blur controls), persisted in localStorage.",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",

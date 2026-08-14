@@ -3,9 +3,7 @@
  * loader format; architecture modeled on the proven dsh-skin plugin).
  *
  * Adds a "背景 / Background" row to Settings → General:
- *   跟随外观 (follow) — built-in appearance (system preference)
- *   白色 (white)      — registered light-scheme theme, white surfaces
- *   黑色 (black)      — registered dark-scheme theme, near-black surfaces
+ *   跟随外观 (follow) — no wallpaper (built-in appearance)
  *   上传图片 (image)  — pick a local image; stored as a compressed data URL
  *                       and rendered as a fixed backdrop behind translucent
  *                       main canvas + sidebar (opacity/blur adjustable)
@@ -13,6 +11,10 @@
  * Persistence is localStorage (third-party settings namespaces are not
  * exposed over the wire). The client bundle requires only module-table
  * entities (react, react/jsx-runtime, @deepseek-ai/dsh-client-runtime/client).
+ *
+ * NOTE on re-entrancy: the wallpaper's token override publishes theme/change,
+ * which this plugin also listens to (to re-shade after a scheme/skin switch).
+ * A re-entrancy guard (inShade) keeps that from recursing into itself.
  */
 window.__ModuleLoader__.load({
   id: "dsh-background",
@@ -26,91 +28,17 @@ window.__ModuleLoader__.load({
 
     /* ── constants ────────────────────────────────────────────────────── */
     const SETTINGS_NS = "settings.background";
-    const MODE_KEY = "dsh-background:mode"; // follow | white | black | image
-    const IMAGE_KEY = "dsh-background:image"; // data URL
+    const IMAGE_KEY = "dsh-background:image"; // data URL (presence = image mode)
     const OPACITY_KEY = "dsh-background:opacity"; // 0..1
     const BLUR_KEY = "dsh-background:blur"; // px 0..60
     const OVERRIDE_SOURCE = "dsh-background:wallpaper";
     const DEFAULT_OPACITY = 0.8;
     const DEFAULT_BLUR = 0;
-    const MODES = ["follow", "white", "black", "image"];
-
-    /* ── the two registered background themes ─────────────────────────── */
-    const THEMES = [
-      {
-        id: "dsh-bg-white",
-        colorScheme: "light",
-        tokens: {
-          "--dsw-alias-bg-base": "#ffffff",
-          "--dsw-alias-bg-layer-1": "#ffffff",
-          "--dsw-alias-bg-layer-2": "#f6f6f8",
-          "--dsw-alias-bg-layer-3": "#f0f0f3",
-          "--dsw-alias-bg-overlay": "#ffffff",
-          "--dsw-alias-border-l1": "rgba(0, 0, 0, 0.05)",
-          "--dsw-alias-border-l2": "rgba(0, 0, 0, 0.1)",
-          "--dsw-alias-label-primary": "#1a1a1f",
-          "--dsw-alias-label-secondary": "#5f5f6a",
-          "--dsw-alias-label-tertiary": "#8a8a94",
-          "--dsw-alias-brand-primary": "#4176E6",
-          "--dsw-alias-brand-text": "#ffffff",
-          "--dsw-alias-button-primary-hover": "#5686FE",
-          "--dsw-alias-button-primary-dimmed": "#f0f0f3",
-          "--dsw-alias-state-business-primary": "#4176E6",
-          "--dsw-alias-state-business-tertiary": "#eef2fd",
-          "--dsw-alias-interactive-bg-hover": "rgba(0, 0, 0, 0.05)",
-          "--dsw-alias-interactive-bg-active": "rgba(0, 0, 0, 0.09)",
-          "--dsw-alias-markdown-code-block": "#f4f4f6",
-          "--dsw-alias-markdown-inline-code": "#eceef2",
-          "--dsw-specific-sidebar-fill": "#fbfbfc",
-          "--dsw-specific-sidebar-nav-item-active": "#f0f0f3",
-          "--dsw-specific-sidebar-nav-item-hover": "#f5f5f7",
-          "--dsw-alias-scrollbar-bg-l1": "#e4e4e8",
-          "--dsw-alias-scrollbar-bg-l2": "#dcdce2",
-          "--dsw-alias-scrollbar-hover-l1": "#d0d0d8",
-          "--dsw-alias-scrollbar-hover-l2": "#d0d0d8",
-        },
-      },
-      {
-        id: "dsh-bg-black",
-        colorScheme: "dark",
-        tokens: {
-          "--dsw-alias-bg-base": "#0a0a0c",
-          "--dsw-alias-bg-layer-1": "#101013",
-          "--dsw-alias-bg-layer-2": "#16161a",
-          "--dsw-alias-bg-layer-3": "#1c1c21",
-          "--dsw-alias-bg-overlay": "#1e1e24",
-          "--dsw-alias-border-l1": "rgba(255, 255, 255, 0.06)",
-          "--dsw-alias-border-l2": "rgba(255, 255, 255, 0.12)",
-          "--dsw-alias-label-primary": "#ececf0",
-          "--dsw-alias-label-secondary": "#9d9da8",
-          "--dsw-alias-label-tertiary": "#7b7b86",
-          "--dsw-alias-brand-primary": "#5686FE",
-          "--dsw-alias-brand-text": "#ffffff",
-          "--dsw-alias-button-primary-hover": "#6d9dfa",
-          "--dsw-alias-button-primary-dimmed": "#16161a",
-          "--dsw-alias-state-business-primary": "#5686FE",
-          "--dsw-alias-state-business-tertiary": "#16161a",
-          "--dsw-alias-interactive-bg-hover": "rgba(255, 255, 255, 0.08)",
-          "--dsw-alias-interactive-bg-active": "rgba(255, 255, 255, 0.14)",
-          "--dsw-alias-markdown-code-block": "#0d0d10",
-          "--dsw-alias-markdown-inline-code": "#16161a",
-          "--dsw-specific-sidebar-fill": "#0d0d10",
-          "--dsw-specific-sidebar-nav-item-active": "#16161a",
-          "--dsw-specific-sidebar-nav-item-hover": "#121216",
-          "--dsw-alias-scrollbar-bg-l1": "#28282e",
-          "--dsw-alias-scrollbar-bg-l2": "#32323a",
-          "--dsw-alias-scrollbar-hover-l1": "#3d3d46",
-          "--dsw-alias-scrollbar-hover-l2": "#3d3d46",
-        },
-      },
-    ];
 
     /* ── locales ──────────────────────────────────────────────────────── */
     const zh = {
       "title": "背景",
       "follow": "跟随外观",
-      "white": "白色",
-      "black": "黑色",
       "image": "上传图片",
       "choose": "选择图片",
       "remove": "移除图片",
@@ -121,8 +49,6 @@ window.__ModuleLoader__.load({
     const en = {
       "title": "Background",
       "follow": "Follow theme",
-      "white": "White",
-      "black": "Black",
       "image": "Upload image",
       "choose": "Choose image",
       "remove": "Remove",
@@ -148,10 +74,6 @@ window.__ModuleLoader__.load({
         // storage unavailable / quota — the preference stays process-local
       }
     }
-    function readMode() {
-      const mode = readStorage(MODE_KEY);
-      return MODES.includes(mode) ? mode : "follow";
-    }
     function readImage() {
       const value = readStorage(IMAGE_KEY);
       return value !== null && value.length > 0 ? value : null;
@@ -172,6 +94,7 @@ window.__ModuleLoader__.load({
     /* ── wallpaper layer + token shading ──────────────────────────────── */
     let wallpaperEl = null;
     let wallpaperOverrideDispose = null;
+    let inShade = false; // re-entrancy guard against theme/change loops
 
     function toRgba(color, alpha) {
       const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim());
@@ -196,20 +119,26 @@ window.__ModuleLoader__.load({
 
     /** Make the main canvas + sidebar translucent so the backdrop shows. */
     function shadeTokens(ctx) {
-      const snapshot = ctx.theme.getTheme();
-      const alpha = readOpacity();
-      const sidebarAlpha = Math.min(1, alpha + 0.1);
-      wallpaperOverrideDispose?.();
-      wallpaperOverrideDispose = ctx.theme.overrideTokens(OVERRIDE_SOURCE, {
-        "--dsw-alias-bg-base": {
-          light: toRgba(resolveBase("light", snapshot.active), alpha),
-          dark: toRgba(resolveBase("dark", snapshot.active), alpha),
-        },
-        "--dsw-specific-sidebar-fill": {
-          light: toRgba(resolveBase("light", snapshot.active), sidebarAlpha),
-          dark: toRgba(resolveBase("dark", snapshot.active), sidebarAlpha),
-        },
-      });
+      if (inShade) return; // we are already inside a theme/change cascade
+      inShade = true;
+      try {
+        const snapshot = ctx.theme.getTheme();
+        const alpha = readOpacity();
+        const sidebarAlpha = Math.min(1, alpha + 0.1);
+        wallpaperOverrideDispose?.();
+        wallpaperOverrideDispose = ctx.theme.overrideTokens(OVERRIDE_SOURCE, {
+          "--dsw-alias-bg-base": {
+            light: toRgba(resolveBase("light", snapshot.active), alpha),
+            dark: toRgba(resolveBase("dark", snapshot.active), alpha),
+          },
+          "--dsw-specific-sidebar-fill": {
+            light: toRgba(resolveBase("light", snapshot.active), sidebarAlpha),
+            dark: toRgba(resolveBase("dark", snapshot.active), sidebarAlpha),
+          },
+        });
+      } finally {
+        inShade = false;
+      }
     }
 
     /** Apply (or clear) the wallpaper layer and its token shading. */
@@ -276,16 +205,14 @@ window.__ModuleLoader__.load({
     function createStore() {
       return defineStore({
         init: () => ({
-          mode: "follow",
           image: null,
           opacity: DEFAULT_OPACITY,
           blur: DEFAULT_BLUR,
           revision: -1,
         }),
         actions: {
-          sync: (d, mode, image, opacity, blur, revision) => {
+          sync: (d, image, opacity, blur, revision) => {
             if (revision <= d.revision) return;
-            d.mode = mode;
             d.image = image;
             d.opacity = opacity;
             d.blur = blur;
@@ -318,24 +245,11 @@ window.__ModuleLoader__.load({
       sliderValue: { color: "var(--dsw-alias-label-secondary)", fontSize: "12px", whiteSpace: "nowrap", width: "44px", textAlign: "right" },
     };
 
-    /** Mini palette preview for a mode card. */
     function ModeSwatch({ mode }) {
       if (mode === "follow") {
         return jsxRuntime.jsxs("div", {
           style: styles.defaultSwatch,
           children: [jsxRuntime.jsx("div", { style: { flex: 1, background: "#f4f4f5" } }), jsxRuntime.jsx("div", { style: { flex: 1, background: "#1c1c20" } })],
-        });
-      }
-      if (mode === "white") {
-        return jsxRuntime.jsxs("div", {
-          style: { ...styles.swatch, background: "#ffffff", border: "1px solid rgba(0,0,0,0.12)" },
-          children: [jsxRuntime.jsx("div", { style: { ...styles.swatchLine, width: "70%", background: "#1a1a1f", opacity: 0.85 } }), jsxRuntime.jsx("div", { style: { ...styles.swatchLine, width: "45%", background: "#4176E6" } })],
-        });
-      }
-      if (mode === "black") {
-        return jsxRuntime.jsxs("div", {
-          style: { ...styles.swatch, background: "#0a0a0c", border: "1px solid rgba(255,255,255,0.14)" },
-          children: [jsxRuntime.jsx("div", { style: { ...styles.swatchLine, width: "70%", background: "#ececf0", opacity: 0.85 } }), jsxRuntime.jsx("div", { style: { ...styles.swatchLine, width: "45%", background: "#5686FE" } })],
         });
       }
       // image: photo-like gradient
@@ -356,9 +270,8 @@ window.__ModuleLoader__.load({
       });
     }
 
-    function BackgroundRow({ t, useStore, setMode, setWallpaper, setOpacity, setBlur }) {
+    function BackgroundRow({ t, useStore, setWallpaper, clearWallpaper, setOpacity, setBlur }) {
       const state = useStore((s) => s);
-      const selected = state.mode;
       const inputRef = React.useRef(null);
       const onFile = (event) => {
         const file = event.target.files?.[0];
@@ -368,38 +281,40 @@ window.__ModuleLoader__.load({
           event.target.value = "";
         });
       };
+      const mode = state.image !== null ? "image" : "follow";
+      const cards = ["follow", "image"];
       return jsxRuntime.jsxs("div", {
         style: styles.group,
         children: [
           jsxRuntime.jsx("div", { style: styles.title, children: t("title") }),
           jsxRuntime.jsxs("div", {
             style: styles.grid,
-            children: MODES.map((mode) =>
+            children: cards.map((card) =>
               jsxRuntime.jsxs(
                 "button",
                 {
                   type: "button",
                   onClick: () => {
-                    if (mode === "image") inputRef.current?.click();
-                    else setMode(mode);
+                    if (card === "image") inputRef.current?.click();
+                    else clearWallpaper();
                   },
-                  "aria-pressed": selected === mode,
-                  style: { ...styles.card, ...(selected === mode ? styles.cardSelected : {}) },
+                  "aria-pressed": mode === card,
+                  style: { ...styles.card, ...(mode === card ? styles.cardSelected : {}) },
                   children: [
-                    jsxRuntime.jsx(ModeSwatch, { mode }),
-                    jsxRuntime.jsx("span", { style: { ...styles.cardLabel, ...(selected === mode ? styles.cardLabelSelected : {}) }, children: t(mode) }),
+                    jsxRuntime.jsx(ModeSwatch, { mode: card }),
+                    jsxRuntime.jsx("span", { style: { ...styles.cardLabel, ...(mode === card ? styles.cardLabelSelected : {}) }, children: t(card) }),
                   ],
                 },
-                mode,
+                card,
               ),
             ),
           }),
-          state.mode === "image" && state.image !== null
+          state.image !== null
             ? jsxRuntime.jsxs("div", {
                 style: styles.actionRow,
                 children: [
                   jsxRuntime.jsx("img", { src: state.image, alt: "", style: styles.preview }),
-                  jsxRuntime.jsx("button", { type: "button", style: { ...styles.button, ...styles.buttonDanger }, onClick: () => setWallpaper(null), children: t("remove") }),
+                  jsxRuntime.jsx("button", { type: "button", style: { ...styles.button, ...styles.buttonDanger }, onClick: () => clearWallpaper(), children: t("remove") }),
                   jsxRuntime.jsx(Slider, { label: t("opacity"), value: Math.round(state.opacity * 100), min: 0, max: 100, step: 1, format: (v) => `${v}%`, onChange: setOpacity }),
                   jsxRuntime.jsx(Slider, { label: t("blur"), value: state.blur, min: 0, max: 60, step: 1, format: (v) => `${v}px`, onChange: setBlur }),
                 ],
@@ -415,34 +330,15 @@ window.__ModuleLoader__.load({
     const inject = ["slots", "locale", "theme"];
 
     function apply(ctx) {
-      // 1. register the two background themes
-      const themeDisposers = THEMES.map((theme) => ctx.theme.register(theme));
-      ctx.effect(
-        () => () => {
-          for (const dispose of themeDisposers) dispose();
-        },
-        "dsh-background: theme registration",
-      );
-
-      // 2. wallpaper bookkeeping (restored below with the mode)
       let revision = 0;
       const store = createStore();
       let bound;
       const syncStore = () => {
         revision += 1;
-        bound?.sync(readMode(), readImage(), readOpacity(), readBlur(), revision);
+        bound?.sync(readImage(), readOpacity(), readBlur(), revision);
       };
 
-      // 3. restore the saved mode
-      const savedMode = readMode();
-      if (savedMode === "white" || savedMode === "black") {
-        const id = `dsh-bg-${savedMode}`;
-        if (ctx.theme.getTheme().preference !== id) ctx.theme.setTheme(id);
-      } else if (savedMode === "follow") {
-        if (THEMES.some((theme) => theme.id === ctx.theme.getTheme().preference)) {
-          ctx.theme.setTheme("system");
-        }
-      }
+      // restore the saved wallpaper
       applyWallpaper(ctx);
       syncStore();
       ctx.effect(
@@ -452,37 +348,24 @@ window.__ModuleLoader__.load({
         "dsh-background: wallpaper cleanup",
       );
 
-      // 4. keep the row in sync with theme changes and re-shade the wash
-      const syncTheme = (snapshot) => {
-        const isWallpaper = readImage() !== null && readMode() === "image";
-        if (isWallpaper) applyWallpaper(ctx);
+      // keep the row in sync and re-shade after a scheme/skin switch
+      ctx.on("theme/change", () => {
+        if (readImage() !== null) applyWallpaper(ctx);
         syncStore();
-      };
-      ctx.on("theme/change", syncTheme);
+      });
       ctx.effect(() => ctx.locale.register(SETTINGS_NS, { zh, en }), "dsh-background: settings row dictionaries");
 
-      // 5. the settings row
       const injected = (actions) => {
         bound = actions;
         syncStore();
         return {
-          setMode: (mode) => {
-            writeStorage(MODE_KEY, mode);
-            if (mode === "white" || mode === "black") {
-              ctx.theme.setTheme(`dsh-bg-${mode}`);
-            } else if (mode === "follow") {
-              ctx.theme.setTheme("system");
-            }
-            // color modes clear the wallpaper; image mode keeps the theme
-            if (mode !== "image") {
-              writeStorage(IMAGE_KEY, null);
-              applyWallpaper(ctx);
-            }
+          setWallpaper: (url) => {
+            writeStorage(IMAGE_KEY, url);
+            applyWallpaper(ctx);
             syncStore();
           },
-          setWallpaper: (url) => {
-            writeStorage(MODE_KEY, "image");
-            writeStorage(IMAGE_KEY, url);
+          clearWallpaper: () => {
+            writeStorage(IMAGE_KEY, null);
             applyWallpaper(ctx);
             syncStore();
           },
@@ -517,7 +400,6 @@ window.__ModuleLoader__.load({
 
     exports.inject = inject;
     exports.apply = apply;
-    exports.THEMES = THEMES;
     return module.exports;
   },
 });
