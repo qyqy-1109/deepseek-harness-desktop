@@ -49,21 +49,31 @@ function tryResolveShim(dshPath, port) {
 /**
  * Resolve the command used to boot `dsh web`.
  * Priority:
- *   1. a BUNDLED dsh (installer-shipped, see prepare-vendor.mjs) — run via
- *      process.execPath with ELECTRON_RUN_AS_NODE=1 (Electron doubles as a
- *      plain Node runtime; under plain node, execPath IS node, so the same
- *      code path works in tests). Fully self-contained: no PATH/install.
- *   2. $DSH_BIN env override
- *   3. `dsh` shim on PATH (resolved to node+bin.js directly)
- *   4. `dsh` executable on PATH
- *   5. real `node` + the npm-global @deepseek-ai/dsh/bin.js
- *   6. npm prefix
+ *   1. a BUNDLED dsh (installer-shipped, see prepare-vendor.mjs) run under a
+ *      BUNDLED REAL node.exe (see prepare-node.mjs) — dsh's native addons
+ *      (koffi folder dialog, sharp, node-pty, ...) are ABI-bound to Node, so
+ *      Electron-as-node cannot run them; the real Node runtime can.
+ *   2. the bundled dsh under ELECTRON_RUN_AS_NODE (fallback when no bundled
+ *      node is present; works for everything except native addons).
+ *   3. $DSH_BIN env override
+ *   4. `dsh` shim on PATH (resolved to node+bin.js directly)
+ *   5. `dsh` executable on PATH
+ *   6. real `node` + the npm-global @deepseek-ai/dsh/bin.js
+ *   7. npm prefix
  * @param port - the web port to pass to `dsh web --port <port>`.
- * @param opts - { bundledDshBin?: string } path to a bundled dsh bin.js.
+ * @param opts - { bundledDshBin?: string, bundledNode?: string }.
  */
 export async function resolveDshCommand(port, opts = {}) {
   if (opts.bundledDshBin && existsSync(opts.bundledDshBin)) {
-    console.log(`[dsh-server] using bundled dsh: ${opts.bundledDshBin}`);
+    if (opts.bundledNode && existsSync(opts.bundledNode)) {
+      console.log(`[dsh-server] using bundled dsh + bundled node: ${opts.bundledNode}`);
+      return {
+        cmd: opts.bundledNode,
+        args: ["--expose-internals", opts.bundledDshBin, "web", "--port", String(port)],
+        shell: false,
+      };
+    }
+    console.log(`[dsh-server] using bundled dsh via Electron-as-node: ${opts.bundledDshBin}`);
     return {
       cmd: process.execPath,
       // --expose-internals: dsh's HMR service needs the internal module

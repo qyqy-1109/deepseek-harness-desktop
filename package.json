@@ -1,6 +1,6 @@
 {
   "name": "dsh-codex-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "author": "dsh-codex-desktop",
   "description": "DeepSeek Harness desktop shell (Electron): double-click to launch dsh web in a standalone window, with a subtle Codex-flavored theme plugin.",
@@ -8,9 +8,10 @@
   "main": "main/main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && electron-builder --win nsis",
-    "dist:portable": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && electron-builder --win portable",
+    "dist": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && node scripts/prepare-node.mjs && electron-builder --win nsis",
+    "dist:portable": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && node scripts/prepare-node.mjs && electron-builder --win portable",
     "prepare:vendor": "node scripts/prepare-vendor.mjs",
+    "prepare:node": "node scripts/prepare-node.mjs",
     "postinstall": "electron-builder install-app-deps"
   },
   "devDependencies": {
@@ -52,6 +53,10 @@
       {
         "from": "vendor/node_modules/@deepseek-ai/dsh",
         "to": "dsh"
+      },
+      {
+        "from": "vendor-node/node.exe",
+        "to": "node/node.exe"
       }
     ]
   },

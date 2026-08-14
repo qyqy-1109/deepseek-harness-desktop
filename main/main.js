@@ -50,6 +50,17 @@ const BUNDLED_DSH_BIN = process.resourcesPath
   ? join(process.resourcesPath, "dsh", "lib", "bin.js")
   : join(ROOT, "vendor", "node_modules", "@deepseek-ai", "dsh", "lib", "bin.js");
 
+/**
+ * Path to the REAL Node runtime bundled with the installer (extraResources →
+ * resources/node/node.exe). dsh web runs under this instead of
+ * Electron-as-node so its native addons (koffi folder dialog, sharp,
+ * node-pty, ...) keep their Node ABI. In dev, the project-local vendor-node/
+ * copy is used.
+ */
+const BUNDLED_NODE = process.resourcesPath
+  ? join(process.resourcesPath, "node", "node.exe")
+  : join(ROOT, "vendor-node", "node.exe");
+
 /** Builtin runtime icons (shipped via assets/**). */
 const BUILTIN_ICONS = {
   blue: join(ROOT, "assets", "icon-blue.png"),
@@ -275,7 +286,7 @@ function rebuildTrayMenu() {
       click: () => {
         if (weSpawnedServer) {
           killTree(serverProcess);
-          resolveDshCommand(PORT, { bundledDshBin: BUNDLED_DSH_BIN })
+          resolveDshCommand(PORT, { bundledDshBin: BUNDLED_DSH_BIN, bundledNode: BUNDLED_NODE })
             .then((cmd) => {
               if (!cmd) throw new Error("no dsh command resolvable");
               return spawnDshServer(cmd, serverCwd());
@@ -346,7 +357,7 @@ if (!gotLock) {
     let serverUp = await probeServer(TARGET_URL);
     if (!serverUp) {
       // 2. otherwise start it ourselves — double-click should "just work"
-      const command = await resolveDshCommand(PORT, { bundledDshBin: BUNDLED_DSH_BIN });
+      const command = await resolveDshCommand(PORT, { bundledDshBin: BUNDLED_DSH_BIN, bundledNode: BUNDLED_NODE });
       if (!command) {
         await showStartupError(
           `未找到 dsh 命令。\n\n请确认已安装 @deepseek-ai/dsh（npm i -g @deepseek-ai/dsh），` +
