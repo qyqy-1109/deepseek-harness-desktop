@@ -1,0 +1,33 @@
+{
+  "name": "dsh-background",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Background/theme switcher for the DeepSeek Harness Web GUI: a settings row to pick follow-theme / white / black / custom uploaded image, persisted in the Host settings.",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-theme"
+      ]
+    }
+  }
+}

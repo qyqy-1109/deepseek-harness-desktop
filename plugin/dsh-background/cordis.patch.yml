@@ -1,0 +1,7 @@
+# dsh-background row for the DeepSeek Harness web profile.
+# Later layers override earlier rows by id; this bundle appends after
+# dsh-web-app so the settings row lands next to the theme's Appearance row.
+- insert:
+    - id: dsh-background
+      name: dsh-background
+      config: {}
