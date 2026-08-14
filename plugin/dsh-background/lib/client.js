@@ -385,9 +385,12 @@ window.__ModuleLoader__.load({
                   },
                   "aria-pressed": selected === mode,
                   style: { ...styles.card, ...(selected === mode ? styles.cardSelected : {}) },
+                  children: [
+                    jsxRuntime.jsx(ModeSwatch, { mode }),
+                    jsxRuntime.jsx("span", { style: { ...styles.cardLabel, ...(selected === mode ? styles.cardLabelSelected : {}) }, children: t(mode) }),
+                  ],
                 },
                 mode,
-                [jsxRuntime.jsx(ModeSwatch, { mode }), jsxRuntime.jsx("span", { style: { ...styles.cardLabel, ...(selected === mode ? styles.cardLabelSelected : {}) }, children: t(mode) })],
               ),
             ),
           }),
