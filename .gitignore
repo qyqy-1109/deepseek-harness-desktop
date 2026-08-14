@@ -1,6 +1,7 @@
 node_modules/
 dist/
 vendor/
+vendor-node/
 build/icon.png
 build/icon.ico
 *.log
