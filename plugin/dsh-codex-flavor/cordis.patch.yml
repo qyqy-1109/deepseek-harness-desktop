@@ -1,0 +1,20 @@
+# Codex-flavor row for the DeepSeek Harness web profile.
+#
+# Patch layers are top-level arrays; later layers override earlier rows by id.
+# This bundle is appended to the profile's bundle list on install
+# (`dsh plugin --profile web add <path>`), so the row lands after dsh-web-app.
+- insert:
+    - id: dsh-codex-flavor
+      name: dsh-codex-flavor
+      config:
+        # Master switch. Set false to disable the flavor without removing the
+        # plugin.
+        enabled: true
+        # Terminal-flavored code blocks (near-black pane in dark mode, subtle
+        # border, tuned code tokens). Applied via the official theme override
+        # mechanism — the DSH design system stays untouched elsewhere.
+        codexCodeBlocks: true
+        # Enforce a coding-oriented monospace stack for code surfaces.
+        codexFont: true
+        # Tune success/status accents toward the Codex terminal green family.
+        codexAccent: true
