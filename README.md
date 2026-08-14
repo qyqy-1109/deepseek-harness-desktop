@@ -5,6 +5,7 @@
 - **独立窗口**承载 DSH Web GUI,不再需要手开浏览器、不再需要记命令;
 - **自动启动服务**:双击图标后自动拉起 `dsh web`(已有服务则直接复用),关窗口最小化到**托盘**;
 - **完全自包含**:安装包内置完整的 dsh CLI 和 Node 运行时(Electron 43 / Node 24),**最终用户不需要安装任何东西**;
+- **应用图标可更换**:托盘菜单 → "应用图标" → 经典蓝色鲸鱼 / 黑色鲸鱼 / **上传自定义图片**(自动裁剪为方形并适配 7 档桌面图标尺寸,同步更新窗口、托盘和桌面快捷方式图标);
 - **官方鲸鱼图标** + 附赠一个**保留 DSH 原生风格、只加一点 Codex 终端质感**的主题点缀插件。
 
 ---
@@ -15,7 +16,7 @@
 
 ### 第 1 步:拿到安装包
 
-从发布者处获取 `DeepSeek Harness Desktop Setup 0.1.0.exe`(约 154MB),或从 [GitHub Releases](../../releases) 下载。
+从发布者处获取 `DeepSeek Harness Desktop Setup 0.1.1.exe`(约 154MB),或从 [GitHub Releases](../../releases) 下载。
 
 ### 第 2 步:安装
 
@@ -41,6 +42,7 @@
 | 完全退出 | 托盘图标右键 → **退出** |
 | 重新打开 | 双击托盘图标或桌面快捷方式 |
 | 从浏览器打开 | 托盘右键 → "在浏览器中打开" |
+| **更换应用图标** | 托盘右键 → **应用图标** → 经典蓝色鲸鱼 / 黑色鲸鱼 / **自定义图标(上传图片)**;上传的图片会自动裁剪成方形并适配所有桌面图标尺寸,窗口、托盘、桌面快捷方式同步更新 |
 
 > 首次启动只需一次初始化;之后每次双击都是秒开。
 
@@ -128,7 +130,11 @@ npm run dist:portable   # 或便携版(免安装)
 node scripts/make-icon.mjs
 ```
 
-生成 `build/icon.png` + `build/icon.ico`(7 种尺寸):官方 DSH 鲸鱼 logo(取自 GUI 的 `/favicon.svg`)+ DeepSeek 蓝渐变圆角底;若 `@resvg/resvg-js` 不可用则回退到内置像素图标。
+生成:
+- `assets/icon-blue.png` + `assets/icon-black.png`(运行时内置的两个鲸鱼图标,打包进应用);
+- `build/icon.png` + `build/icon.ico`(安装包/exe 用的蓝色鲸鱼图标,7 种尺寸)。
+
+图标源为官方 DSH 鲸鱼 logo(取自 GUI 的 `/favicon.svg`,见 `build/favicon-official.svg`)+ DeepSeek 蓝渐变圆角底;若 `@resvg/resvg-js` 不可用则回退到内置像素图标。运行时更换图标(托盘 → 应用图标)会生成多尺寸 ICO 到用户目录 `%APPDATA%\dsh-codex-desktop\icons\`。
 
 ### 5. 项目结构
 

@@ -8,12 +8,17 @@
  *    window needed) — the server logic lives in ./dsh-server.mjs
  *  - present the DSH Web GUI in a standalone window (persistent partition,
  *    context-isolated, no node integration)
- *  - tray menu: show / open-in-browser / restart-server / quit
+ *  - icon management: two builtin whale icons (classic blue / black) plus a
+ *    custom-upload option; the selection is persisted, applied to the window,
+ *    tray and desktop/start-menu shortcuts, and uploaded images are
+ *    auto-cropped/resized to every standard Windows icon size
+ *  - tray menu: show / open-in-browser / restart-server / icon / quit
  *  - on quit, terminate only the child server we spawned (never a pre-existing
  *    instance)
  */
 import { app, BrowserWindow, Menu, Tray, nativeImage, shell } from "electron";
-import { existsSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -24,6 +29,7 @@ import {
   spawnDshServer,
   waitForServer,
 } from "./dsh-server.mjs";
+import { encodeIco, ICON_SIZES } from "./icon-maker.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -44,6 +50,13 @@ const BUNDLED_DSH_BIN = process.resourcesPath
   ? join(process.resourcesPath, "dsh", "lib", "bin.js")
   : join(ROOT, "vendor", "node_modules", "@deepseek-ai", "dsh", "lib", "bin.js");
 
+/** Builtin runtime icons (shipped via assets/**). */
+const BUILTIN_ICONS = {
+  blue: join(ROOT, "assets", "icon-blue.png"),
+  black: join(ROOT, "assets", "icon-black.png"),
+};
+const SHORTCUT_NAME = "DeepSeek Harness";
+
 let mainWindow = null;
 let tray = null;
 let serverProcess = null;
@@ -51,8 +64,142 @@ let weSpawnedServer = false;
 let isQuitting = false;
 
 /* ------------------------------------------------------------------ */
+/* icon management                                                    */
+/* ------------------------------------------------------------------ */
+
+const USER_DATA = () => app.getPath("userData");
+const ICON_DIR = () => join(USER_DATA(), "icons");
+const ICON_SETTINGS_FILE = () => join(USER_DATA(), "icon-settings.json");
+const CURRENT_ICO = () => join(ICON_DIR(), "current.ico");
+const CURRENT_PNG = () => join(ICON_DIR(), "current.png");
+
+function loadIconSettings() {
+  try {
+    const parsed = JSON.parse(readFileSync(ICON_SETTINGS_FILE(), "utf8"));
+    if (parsed && typeof parsed.source === "string") return parsed;
+  } catch {
+    /* first run */
+  }
+  return { source: "blue" };
+}
+
+function saveIconSettings(settings) {
+  mkdirSync(USER_DATA(), { recursive: true });
+  writeFileSync(ICON_SETTINGS_FILE(), JSON.stringify(settings, null, 2), "utf8");
+}
+
+/**
+ * Build the multi-size PNG map for one icon source.
+ * @param source - "blue" | "black" | "custom".
+ * @param customPath - file path when source is "custom".
+ * @returns Map<size, Buffer> with every standard icon size.
+ */
+async function buildIconPngs(source, customPath) {
+  const image =
+    source === "custom" && customPath
+      ? nativeImage.createFromPath(customPath)
+      : nativeImage.createFromPath(BUILTIN_ICONS[source] ?? BUILTIN_ICONS.blue);
+  if (image.isEmpty()) throw new Error(source === "custom" ? "无法读取所选图片文件" : "内置图标缺失");
+  // center-crop to a square, then downscale to every standard size
+  const { width: w, height: h } = image.getSize();
+  const side = Math.min(w, h);
+  const cropped = image.crop({
+    x: Math.floor((w - side) / 2),
+    y: Math.floor((h - side) / 2),
+    width: side,
+    height: side,
+  });
+  const pngs = new Map();
+  for (const size of ICON_SIZES) {
+    pngs.set(size, cropped.resize({ width: size, height: size, quality: "best" }).toPNG());
+  }
+  return pngs;
+}
+
+/** Materialize the current icon files (current.ico + current.png). */
+async function materializeCurrentIcon(settings) {
+  const pngs = await buildIconPngs(settings.source, settings.customPath);
+  mkdirSync(ICON_DIR(), { recursive: true });
+  writeFileSync(CURRENT_ICO(), encodeIco(pngs));
+  writeFileSync(CURRENT_PNG(), pngs.get(256));
+  return { ico: CURRENT_ICO(), png: CURRENT_PNG() };
+}
+
+/** Re-point window + tray at the current icon files. */
+function applyIconToApp() {
+  if (!existsSync(CURRENT_ICO())) return;
+  const ico = nativeImage.createFromPath(CURRENT_ICO());
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setIcon(ico);
+  if (tray && !tray.isDestroyed()) {
+    tray.setImage(nativeImage.createFromPath(CURRENT_PNG()).resize({ width: 16, height: 16 }));
+  }
+}
+
+/**
+ * Rewrite the desktop + start-menu shortcuts' icon to the given .ico file
+ * (WScript.Shell via PowerShell; Windows only, best-effort).
+ */
+function updateShortcutIcons(icoPath) {
+  if (process.platform !== "win32") return;
+  const script = [
+    "$ws = New-Object -ComObject WScript.Shell",
+    `$icon = ${JSON.stringify(icoPath)}`,
+    `$names = @(${JSON.stringify(`${SHORTCUT_NAME}.lnk`)})`,
+    `$dirs = @("$env:USERPROFILE\\Desktop", "$env:PUBLIC\\Desktop", "$env:APPDATA\\Microsoft\\Windows\\Start Menu\\Programs")`,
+    "foreach ($d in $dirs) { foreach ($n in $names) { $t = Join-Path $d $n; if (Test-Path $t) { $s = $ws.CreateShortcut($t); $s.IconLocation = $icon; $s.Save() } } }",
+  ].join("; ");
+  try {
+    spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script], {
+      windowsHide: true,
+      stdio: "ignore",
+    });
+  } catch (error) {
+    console.error("[desktop] shortcut icon update failed:", error.message);
+  }
+}
+
+/** Apply a new icon selection end-to-end: build, persist, apply, shortcuts. */
+async function changeIcon(source, customPath) {
+  const settings = { source, ...(customPath ? { customPath } : {}) };
+  try {
+    await materializeCurrentIcon(settings);
+    saveIconSettings(settings);
+    applyIconToApp();
+    updateShortcutIcons(CURRENT_ICO());
+    console.log(`[desktop] icon changed to ${source}${customPath ? ` (${customPath})` : ""}`);
+  } catch (error) {
+    const { dialog } = await import("electron");
+    dialog.showErrorBox("图标设置失败", error.message);
+  }
+  rebuildTrayMenu();
+}
+
+/** Open the file picker and apply a custom uploaded icon. */
+async function pickCustomIcon() {
+  const { dialog } = await import("electron");
+  const result = await dialog.showOpenDialog({
+    title: "选择图标图片(PNG / JPG / ICO)",
+    properties: ["openFile"],
+    filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "ico", "bmp"] }],
+  });
+  if (result.canceled || result.filePaths.length === 0) {
+    rebuildTrayMenu(); // radio reverts
+    return;
+  }
+  await changeIcon("custom", result.filePaths[0]);
+}
+
+/* ------------------------------------------------------------------ */
 /* window & tray                                                      */
 /* ------------------------------------------------------------------ */
+
+function windowIconPath() {
+  if (process.platform === "win32" && existsSync(CURRENT_ICO())) return CURRENT_ICO();
+  if (existsSync(CURRENT_PNG())) return CURRENT_PNG();
+  const ico = join(ROOT, "build", "icon.ico");
+  if (process.platform === "win32" && existsSync(ico)) return ico;
+  return join(ROOT, "build", "icon.png");
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -63,7 +210,7 @@ function createWindow() {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: "#111113",
-    icon: iconPath(),
+    icon: windowIconPath(),
     title: "DeepSeek Harness",
     webPreferences: {
       contextIsolation: true,
@@ -90,19 +237,35 @@ function createWindow() {
   });
 }
 
-function iconPath() {
-  const png = join(ROOT, "build", "icon.png");
-  const ico = join(ROOT, "build", "icon.ico");
-  if (process.platform === "win32" && existsSync(ico)) return ico;
-  return png;
+function trayImage() {
+  const png = existsSync(CURRENT_PNG()) ? CURRENT_PNG() : join(ROOT, "build", "icon.png");
+  return nativeImage.createFromPath(png).resize({ width: 16, height: 16 });
 }
 
-function createTray() {
-  const png = join(ROOT, "build", "icon.png");
-  if (!existsSync(png)) return;
-  const image = nativeImage.createFromPath(png);
-  tray = new Tray(image.resize({ width: 16, height: 16 }));
-  tray.setToolTip("DeepSeek Harness");
+function rebuildTrayMenu() {
+  if (!tray) return;
+  const settings = loadIconSettings();
+  const iconMenu = [
+    {
+      label: "经典蓝色鲸鱼",
+      type: "radio",
+      checked: settings.source === "blue",
+      click: () => changeIcon("blue"),
+    },
+    {
+      label: "黑色鲸鱼",
+      type: "radio",
+      checked: settings.source === "black",
+      click: () => changeIcon("black"),
+    },
+    { type: "separator" },
+    {
+      label: "自定义图标(上传图片)…",
+      type: "radio",
+      checked: settings.source === "custom",
+      click: () => pickCustomIcon(),
+    },
+  ];
   const menu = Menu.buildFromTemplate([
     { label: "显示主窗口", click: () => { mainWindow?.show(); mainWindow?.focus(); } },
     { label: "在浏览器中打开", click: () => shell.openExternal(TARGET_URL) },
@@ -132,9 +295,17 @@ function createTray() {
       },
     },
     { type: "separator" },
+    { label: "应用图标", submenu: iconMenu },
+    { type: "separator" },
     { label: "退出", click: () => { isQuitting = true; app.quit(); } },
   ]);
   tray.setContextMenu(menu);
+}
+
+function createTray() {
+  tray = new Tray(trayImage());
+  tray.setToolTip("DeepSeek Harness");
+  rebuildTrayMenu();
   tray.on("click", () => {
     if (mainWindow?.isVisible()) mainWindow.hide();
     else { mainWindow?.show(); mainWindow?.focus(); }
@@ -164,6 +335,13 @@ if (!gotLock) {
       isQuitting = true;
       app.quit();
     };
+    // 0. materialize the persisted icon choice (first run → classic blue)
+    try {
+      const settings = loadIconSettings();
+      if (!existsSync(CURRENT_ICO())) await materializeCurrentIcon(settings);
+    } catch (error) {
+      console.warn("[desktop] icon materialization failed:", error.message);
+    }
     // 1. reuse an already-running dsh web when possible
     let serverUp = await probeServer(TARGET_URL);
     if (!serverUp) {
