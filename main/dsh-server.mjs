@@ -66,7 +66,11 @@ export async function resolveDshCommand(port, opts = {}) {
     console.log(`[dsh-server] using bundled dsh: ${opts.bundledDshBin}`);
     return {
       cmd: process.execPath,
-      args: [opts.bundledDshBin, "web", "--port", String(port)],
+      // --expose-internals: dsh's HMR service needs the internal module
+      // loader; under ELECTRON_RUN_AS_NODE the native fallback addon is ABI-
+      // incompatible, so the flag is the reliable path (works under plain
+      // node too).
+      args: ["--expose-internals", opts.bundledDshBin, "web", "--port", String(port)],
       shell: false,
       env: { ELECTRON_RUN_AS_NODE: "1" },
     };

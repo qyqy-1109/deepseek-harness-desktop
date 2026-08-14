@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "electron": "^33.0.0",
+    "electron": "^43.4.0",
     "electron-builder": "^25.1.8"
   },
   "build": {
@@ -54,5 +54,8 @@
         "to": "dsh"
       }
     ]
+  },
+  "allowScripts": {
+    "electron@43.4.0": true
   }
 }
