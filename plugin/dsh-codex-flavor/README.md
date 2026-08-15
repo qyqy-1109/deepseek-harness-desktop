@@ -38,7 +38,7 @@ config:
 前置:pnpm 可用(`corepack enable` 或加入 PATH)。
 
 ```sh
-cd D:\deepseek工作区\dsh-codex-desktop\plugin\dsh-codex-flavor
+cd D:\deepseek-harness-桌面端\dsh-codex-desktop\plugin\dsh-codex-flavor
 dsh plugin --profile web add .
 ```
 
