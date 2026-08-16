@@ -30,6 +30,7 @@ import {
   waitForServer,
 } from "./dsh-server.mjs";
 import { encodeIco, ICON_SIZES } from "./icon-maker.mjs";
+import { seedBundledPlugins } from "./plugin-seed.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -60,6 +61,15 @@ const BUNDLED_DSH_BIN = process.resourcesPath
 const BUNDLED_NODE = process.resourcesPath
   ? join(process.resourcesPath, "node", "node.exe")
   : join(ROOT, "vendor-node", "node.exe");
+
+/**
+ * Path to the plugins shipped with the installer (extraResources →
+ * resources/plugins, a flat node_modules layout from prepare-plugins.mjs).
+ * Seeded into a fresh web profile on first boot (see plugin-seed.mjs).
+ */
+const BUNDLED_PLUGINS_DIR = process.resourcesPath
+  ? join(process.resourcesPath, "plugins")
+  : join(ROOT, "vendor-plugins", "node_modules");
 
 /** Builtin runtime icons (shipped via assets/**). */
 const BUILTIN_ICONS = {
@@ -409,6 +419,13 @@ if (!gotLock) {
       if (!existsSync(CURRENT_ICO())) await materializeCurrentIcon(settings);
     } catch (error) {
       console.warn("[desktop] icon materialization failed:", error.message);
+    }
+    // 0.5. seed the bundled plugins into a fresh web profile (before boot)
+    try {
+      const seeded = seedBundledPlugins(BUNDLED_PLUGINS_DIR);
+      if (seeded.length > 0) console.log(`[desktop] seeded bundled plugins: ${seeded.join(", ")}`);
+    } catch (error) {
+      console.warn("[desktop] plugin seeding failed:", error.message);
     }
     // 1. quick probe: reuse an already-running dsh web when possible
     const serverUp = await probeServer(TARGET_URL);

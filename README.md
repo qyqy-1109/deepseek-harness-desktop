@@ -5,6 +5,7 @@
 - **独立窗口**承载 DSH Web GUI,不再需要手开浏览器、不再需要记命令;
 - **自动启动服务**:双击图标后自动拉起 `dsh web`(已有服务则直接复用),关窗口最小化到**托盘**;
 - **完全自包含**:安装包内置完整的 dsh CLI 和 Node 运行时(Electron 43 / Node 24),**最终用户不需要安装任何东西**;
+- **内置常用插件**:安装包附带 6 个插件(背景图库、Codex 风味、dshmarket、dsh-difyctl、super-injector、mode-boost),首次启动自动装进全新 profile,朋友开箱即用
 - **应用图标可更换**:托盘菜单 → "应用图标" → 经典蓝色鲸鱼 / 黑色鲸鱼 / **上传自定义图片**(自动裁剪为方形并适配 7 档桌面图标尺寸,同步更新窗口、托盘和桌面快捷方式图标);
 - **官方鲸鱼图标** + 附赠一个**保留 DSH 原生风格、只加一点 Codex 终端质感**的主题点缀插件。
 
@@ -16,7 +17,7 @@
 
 ### 第 1 步:拿到安装包
 
-从发布者处获取 `DeepSeek Harness Desktop Setup 0.1.4.exe`(约 176MB),或从 [GitHub Releases](../../releases) 下载。
+从发布者处获取 `DeepSeek Harness Desktop Setup 0.1.5.exe`(约 176MB),或从 [GitHub Releases](../../releases) 下载。
 
 ### 第 2 步:安装
 
