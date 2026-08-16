@@ -14,6 +14,7 @@
  *    missing packages, so a normal machine (pnpm-managed profile) is a no-op.
  */
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
 /** Bundles that ship with every web profile (resolution anchors are built-in). */
@@ -67,9 +68,11 @@ function copyPackage(srcDir, destDir) {
  * Seed the plugins. Returns the list of plugin names present in the manifest
  * (for logging). Safe to call every launch.
  * @param pluginsDir - the shipped plugins dir (resources/plugins or vendor-plugins/node_modules).
- * @param dshHome - the Harness home (defaults to $DSH_HOME).
+ * @param dshHome - the Harness home; defaults to $DSH_HOME, falling back to
+ *   ~/.dsh (DSH's own resolution) — most end-user machines have NO DSH_HOME
+ *   environment variable, so the fallback is what makes seeding work there.
  */
-export function seedBundledPlugins(pluginsDir, dshHome = process.env.DSH_HOME) {
+export function seedBundledPlugins(pluginsDir, dshHome = process.env.DSH_HOME ?? join(homedir(), ".dsh")) {
   const seeded = [];
   if (!dshHome || !existsSync(pluginsDir)) return seeded;
   const profileDir = join(dshHome, "profiles", "web");

@@ -18,7 +18,7 @@
  */
 import { app, BrowserWindow, Menu, Tray, nativeImage, shell } from "electron";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -257,6 +257,21 @@ function windowIconPath() {
 }
 
 /**
+ * Append one line to the startup log (userData/startup.log) — the packaged
+ * app has no visible console, so remote diagnostics depend on this file.
+ */
+function bootLog(line) {
+  try {
+    const stamp = new Date().toISOString();
+    const file = join(app.getPath("userData"), "startup.log");
+    mkdirSync(dirname(file), { recursive: true });
+    appendFileSync(file, `[${stamp}] ${line}\n`);
+  } catch {
+    /* logging must never break startup */
+  }
+}
+
+/**
  * Create the main window. It loads the inline loading page immediately and,
  * when `showImmediately` is set, becomes visible right away — so starting the
  * server (which can take tens of seconds on first boot) never leaves the user
@@ -409,6 +424,7 @@ if (!gotLock) {
     /** Show a startup failure and quit (helper keeps the dialog in one place). */
     const showStartupError = async (detail) => {
       const { dialog } = await import("electron");
+      bootLog(`startup error: ${detail.split("\n")[0]}`);
       dialog.showErrorBox("无法启动 DeepSeek Harness 服务", detail);
       isQuitting = true;
       app.quit();
@@ -422,9 +438,12 @@ if (!gotLock) {
     }
     // 0.5. seed the bundled plugins into a fresh web profile (before boot)
     try {
-      const seeded = seedBundledPlugins(BUNDLED_PLUGINS_DIR);
-      if (seeded.length > 0) console.log(`[desktop] seeded bundled plugins: ${seeded.join(", ")}`);
+      const dshHome = process.env.DSH_HOME ?? join(app.getPath("home"), ".dsh");
+      const seeded = seedBundledPlugins(BUNDLED_PLUGINS_DIR, dshHome);
+      if (seeded.length > 0) bootLog(`seeded bundled plugins: ${seeded.join(", ")}`);
+      else bootLog("plugin seeding: nothing new (already present or no bundled plugins)");
     } catch (error) {
+      bootLog(`plugin seeding failed: ${error.message}`);
       console.warn("[desktop] plugin seeding failed:", error.message);
     }
     // 1. quick probe: reuse an already-running dsh web when possible
@@ -445,7 +464,9 @@ if (!gotLock) {
       try {
         serverProcess = await spawnDshServer(command, serverCwd());
         weSpawnedServer = true;
+        bootLog(`server spawned: ${command.cmd} ${command.args.join(" ")}`);
       } catch (error) {
+        bootLog(`server spawn failed: ${error.message}`);
         await showStartupError(
           `启动 dsh web 失败:${error.message}\n\n命令:${command.cmd} ${command.args.join(" ")}`,
         );
@@ -461,6 +482,7 @@ if (!gotLock) {
       }
     }
     console.log(`[desktop] server ready at ${TARGET_URL}`);
+    bootLog(`server ready at ${TARGET_URL}`);
     // 4. swap the loading page for the real GUI
     loadGuiIntoWindow();
     createTray();

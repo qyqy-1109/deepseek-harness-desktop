@@ -1,6 +1,6 @@
 {
   "name": "dsh-codex-desktop",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "author": "dsh-codex-desktop",
   "description": "DeepSeek Harness desktop shell (Electron): double-click to launch dsh web in a standalone window, with a subtle Codex-flavored theme plugin.",
