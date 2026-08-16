@@ -243,6 +243,7 @@ dsh plugin --profile web add -w <本目录绝对路径>   # -w 必需(profile �
 本项目站在以下开源知识与项目之上,特此致谢:
 
 - **[KinGao294/dsh-skin](https://github.com/KinGao294/dsh-skin)** — 背景图片插件的**直接架构范本**:`ctx.theme.register` 注册主题、`ctx.theme.overrideTokens` 半透明化主画布/侧边栏、`z-index:-1` 固定背景层、localStorage 持久化,以及"第三方 settings 命名空间不在 Host 白名单(`WEB_SETTINGS_NAMESPACES`)内"等平台边界知识;
+- **[yjh051108/dsh-routing-suite](https://github.com/yjh051108/dsh-routing-suite)** — 感谢作者 **风神** 的路由套件插件(super-injector / mode-boost):随安装包内置分发,并为本项目提供了 settings 槽位契约的实战参考(其 `settings.section` 注册方式帮助我们确认了插件页必须使用 React 组件契约);
 - **[deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)** — DeepSeek Harness 本身:客户端插件契约(`dsh.bundle` / `dsh.client` / 双面导出)、`--dsw-*` 设计 token 体系、`__ModuleLoader__` bundle 格式、设置槽位(`settings.general.item`)等均以其正式版实现为准;
 - **[dsh-external/dsh-agent-teams](https://github.com/NanmiCoder/dsh-agent-teams)(公开镜像)** — 其 `dsh-plugin-development` 开发 Skill 指导了本项目插件开发的完整流程(契约、取证、验证矩阵);
 - **[Electron](https://www.electronjs.org/)** 与 **[electron-builder](https://www.electron.build/)** — 桌面壳与打包;**[npmmirror](https://npmmirror.com/)** 提供了国内可用的二进制镜像。
