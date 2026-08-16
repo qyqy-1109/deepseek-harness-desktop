@@ -73,6 +73,40 @@ let tray = null;
 let serverProcess = null;
 let weSpawnedServer = false;
 let isQuitting = false;
+/** A second launch arrived while the window was still booting. */
+let pendingFocus = false;
+
+/**
+ * Inline loading page shown while the dsh web server is being started, so a
+ * double-click ALWAYS produces a visible window immediately (no dead clicks).
+ */
+const LOADING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(
+  `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html,body{height:100%;margin:0;background:#111113;color:#e6e6ea;
+    font-family:"Segoe UI",system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
+  .card{text-align:center;user-select:none}
+  .whale{font-size:56px;line-height:1;filter:drop-shadow(0 4px 18px rgba(86,134,254,.45))}
+  h1{font-size:18px;font-weight:600;margin:14px 0 6px;letter-spacing:.3px}
+  p{font-size:13px;color:#9d9da8;margin:0}
+  .spin{width:22px;height:22px;margin:22px auto 0;border:3px solid #26262c;border-top-color:#5686FE;
+    border-radius:50%;animation:r 1s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="whale">🐋</div>
+    <h1>DeepSeek Harness</h1>
+    <p>正在启动 dsh web 服务,请稍候…</p>
+    <div class="spin"></div>
+  </div>
+</body>
+</html>`,
+)}`;
 
 /* ------------------------------------------------------------------ */
 /* icon management                                                    */
@@ -212,13 +246,20 @@ function windowIconPath() {
   return join(ROOT, "build", "icon.png");
 }
 
-function createWindow() {
+/**
+ * Create the main window. It loads the inline loading page immediately and,
+ * when `showImmediately` is set, becomes visible right away — so starting the
+ * server (which can take tens of seconds on first boot) never leaves the user
+ * with a "dead" click. The caller swaps in the real GUI URL once the server
+ * is reachable.
+ */
+function createWindow(showImmediately = false) {
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    show: false,
+    show: showImmediately,
     autoHideMenuBar: true,
     backgroundColor: "#111113",
     icon: windowIconPath(),
@@ -231,8 +272,7 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadURL(TARGET_URL);
-  mainWindow.once("ready-to-show", () => mainWindow.show());
+  mainWindow.loadURL(LOADING_HTML);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("http://") || url.startsWith("https://")) shell.openExternal(url);
     return { action: "deny" };
@@ -246,6 +286,20 @@ function createWindow() {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+}
+
+/** Switch the window to the real GUI (once the server is reachable). */
+function loadGuiIntoWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.loadURL(TARGET_URL);
+  mainWindow.once("ready-to-show", () => {
+    if (!mainWindow.isVisible()) mainWindow.show();
+  });
+  if (pendingFocus) {
+    pendingFocus = false;
+    mainWindow.show();
+    mainWindow.focus();
+  }
 }
 
 function trayImage() {
@@ -332,9 +386,12 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (!mainWindow.isVisible()) mainWindow.show();
       mainWindow.focus();
+    } else {
+      // still booting — remember to focus the window once it exists
+      pendingFocus = true;
     }
   });
 
@@ -353,10 +410,13 @@ if (!gotLock) {
     } catch (error) {
       console.warn("[desktop] icon materialization failed:", error.message);
     }
-    // 1. reuse an already-running dsh web when possible
-    let serverUp = await probeServer(TARGET_URL);
+    // 1. quick probe: reuse an already-running dsh web when possible
+    const serverUp = await probeServer(TARGET_URL);
+    // 2. create the window NOW (loading page; visible right away when the
+    //    server still needs to start, so clicks always get feedback)
+    createWindow(!serverUp);
     if (!serverUp) {
-      // 2. otherwise start it ourselves — double-click should "just work"
+      // 3. start it ourselves — double-click should "just work"
       const command = await resolveDshCommand(PORT, { bundledDshBin: BUNDLED_DSH_BIN, bundledNode: BUNDLED_NODE });
       if (!command) {
         await showStartupError(
@@ -374,17 +434,18 @@ if (!gotLock) {
         );
         return;
       }
-      serverUp = await waitForServer(TARGET_URL);
-    }
-    if (!serverUp) {
-      await showStartupError(
-        `在 ${TARGET_URL} 上等待 dsh web 服务超时。\n\n` +
-          `请确认已安装 @deepseek-ai/dsh（npm i -g @deepseek-ai/dsh），或设置 DSH_BIN 指向 dsh 可执行文件。`,
-      );
-      return;
+      const ready = await waitForServer(TARGET_URL);
+      if (!ready) {
+        await showStartupError(
+          `在 ${TARGET_URL} 上等待 dsh web 服务超时。\n\n` +
+            `请确认已安装 @deepseek-ai/dsh（npm i -g @deepseek-ai/dsh），或设置 DSH_BIN 指向 dsh 可执行文件。`,
+        );
+        return;
+      }
     }
     console.log(`[desktop] server ready at ${TARGET_URL}`);
-    createWindow();
+    // 4. swap the loading page for the real GUI
+    loadGuiIntoWindow();
     createTray();
     Menu.setApplicationMenu(null);
 
