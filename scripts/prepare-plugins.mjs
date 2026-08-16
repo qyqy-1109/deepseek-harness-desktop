@@ -25,7 +25,6 @@ const PLUGINS = {
   "dsh-codex-flavor": "file:D:/deepseek-harness-桌面端/dsh-codex-desktop/plugin/dsh-codex-flavor",
   "dsh-background": "file:D:/deepseek-harness-桌面端/dsh-codex-desktop/plugin/dsh-background",
   "dsh-difyctl": "file:D:/deepseek-工作区/dsh-difyctl",
-  "@dsh-external/dsh-super-injector": "file:D:/deepseek-路由套件/dsh-routing-suite/injector",
   "@dsh-external/dsh-mode-boost": "file:D:/deepseek-路由套件/dsh-routing-suite/mode-boost",
 };
 
