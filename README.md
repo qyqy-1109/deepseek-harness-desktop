@@ -1,81 +1,81 @@
-# DeepSeek Harness Desktop 馃枼锔?
+# DeepSeek Harness Desktop 🖥️
 
-鎶?[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 鍙樻垚**鍙屽嚮鍗崇敤鐨?Windows 妗岄潰搴旂敤**:
+把 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 变成**双击即用的 Windows 桌面应用**:
 
-- **鐙珛绐楀彛**鎵胯浇 DSH Web GUI,涓嶅啀闇€瑕佹墜寮€娴忚鍣ㄣ€佷笉鍐嶉渶瑕佽鍛戒护;
-- **鑷姩鍚姩鏈嶅姟**:鍙屽嚮鍥炬爣鍚庤嚜鍔ㄦ媺璧?`dsh web`(宸叉湁鏈嶅姟鍒欑洿鎺ュ鐢?,鍏崇獥鍙ｆ渶灏忓寲鍒?*鎵樼洏**;
-- **瀹屽叏鑷寘鍚?*:瀹夎鍖呭唴缃畬鏁寸殑 dsh CLI 鍜?Node 杩愯鏃?Electron 43 / Node 24),**鏈€缁堢敤鎴蜂笉闇€瑕佸畨瑁呬换浣曚笢瑗?*;
-- **搴旂敤鍥炬爣鍙洿鎹?*:鎵樼洏鑿滃崟 鈫?"搴旂敤鍥炬爣" 鈫?缁忓吀钃濊壊椴搁奔 / 榛戣壊椴搁奔 / **涓婁紶鑷畾涔夊浘鐗?*(鑷姩瑁佸壀涓烘柟褰㈠苟閫傞厤 7 妗ｆ闈㈠浘鏍囧昂瀵?鍚屾鏇存柊绐楀彛銆佹墭鐩樺拰妗岄潰蹇嵎鏂瑰紡鍥炬爣);
-- **瀹樻柟椴搁奔鍥炬爣** + 闄勮禒涓€涓?*淇濈暀 DSH 鍘熺敓椋庢牸銆佸彧鍔犱竴鐐?Codex 缁堢璐ㄦ劅**鐨勪富棰樼偣缂€鎻掍欢銆?
+- **独立窗口**承载 DSH Web GUI,不再需要手开浏览器、不再需要记命令;
+- **自动启动服务**:双击图标后自动拉起 `dsh web`(已有服务则直接复用),关窗口最小化到**托盘**;
+- **完全自包含**:安装包内置完整的 dsh CLI 和 Node 运行时(Electron 43 / Node 24),**最终用户不需要安装任何东西**;
+- **应用图标可更换**:托盘菜单 → "应用图标" → 经典蓝色鲸鱼 / 黑色鲸鱼 / **上传自定义图片**(自动裁剪为方形并适配 7 档桌面图标尺寸,同步更新窗口、托盘和桌面快捷方式图标);
+- **官方鲸鱼图标** + 附赠一个**保留 DSH 原生风格、只加一点 Codex 终端质感**的主题点缀插件。
 
 ---
 
-## 馃摝 涓€銆佺粰鏈€缁堢敤鎴?瀹夎鏁欑▼(鍙戠粰鏈嬪弸鐓х潃鍋?
+## 📦 一、给最终用户:安装教程(发给朋友照着做)
 
-> 浣犵殑鏈嬪弸鍙渶瑕佷笅闈㈣繖涓€鑺?涓嶉渶瑕?Node.js銆佷笉闇€瑕佸懡浠よ銆佷笉闇€瑕佹噦鎶€鏈€?
+> 你的朋友只需要下面这一节,不需要 Node.js、不需要命令行、不需要懂技术。
 
-### 绗?1 姝?鎷垮埌瀹夎鍖?
+### 第 1 步:拿到安装包
 
-浠庡彂甯冭€呭鑾峰彇 `DeepSeek Harness Desktop Setup 0.1.4.exe`(绾?176MB),鎴栦粠 [GitHub Releases](../../releases) 涓嬭浇銆?
+从发布者处获取 `DeepSeek Harness Desktop Setup 0.1.4.exe`(约 176MB),或从 [GitHub Releases](../../releases) 下载。
 
-### 绗?2 姝?瀹夎
+### 第 2 步:安装
 
-1. 鍙屽嚮瀹夎鍖?
-2. 鑻ュ嚭鐜拌摑鑹?**SmartScreen 鎻愮ず"Windows 宸蹭繚鎶や綘鐨勭數鑴?** 鈥斺€?鍥犱负杞欢鏈喘涔颁唬鐮佺鍚嶈瘉涔?杩欐槸姝ｅ父鐜拌薄:
-   - 鐐瑰嚮 **"鏇村淇℃伅"** 鈫?**"浠嶈杩愯"**;
-3. 绛夊緟杩涘害鏉″畬鎴?**棣栨瀹夎 2~10 鍒嗛挓閮芥甯?*,瑙佷笅鏂?甯歌闂");
-4. 瀹夎瀹屾垚鍚庢闈㈣嚜鍔ㄥ嚭鐜?**"DeepSeek Harness"** 蹇嵎鏂瑰紡,搴旂敤浼氳嚜鍔ㄦ墦寮€銆?
+1. 双击安装包;
+2. 若出现蓝色 **SmartScreen 提示"Windows 已保护你的电脑"** —— 因为软件未购买代码签名证书,这是正常现象:
+   - 点击 **"更多信息"** → **"仍要运行"**;
+3. 等待进度条完成(**首次安装 2~10 分钟都正常**,见下方"常见问题");
+4. 安装完成后桌面自动出现 **"DeepSeek Harness"** 快捷方式,应用会自动打开。
 
-### 绗?3 姝?棣栨鍚姩(绾?10~20 绉?
+### 第 3 步:首次启动(约 10~20 秒)
 
-1. 鍙屽嚮妗岄潰蹇嵎鏂瑰紡;
-2. 棣栨鍚姩鏃跺簲鐢ㄤ細鑷姩鍒濆鍖栭厤缃洰褰?`C:\Users\浣犵殑鐢ㄦ埛鍚峔.dsh`),**绐楀彛浼氭櫄涓€鐐瑰嚭鐜?璇疯€愬績绛夊緟**;
-3. 绐楀彛鎵撳紑鍚?鐐瑰嚮宸︿晶 **璁剧疆(鈿欙笍)** 鈫?**妯″瀷**,濉叆浣犵殑 **DeepSeek API Key**(娌℃湁灏卞埌 [platform.deepseek.com](https://platform.deepseek.com) 鐢宠);
-4. 鍥炲埌浼氳瘽椤?寮€濮嬩娇鐢?
+1. 双击桌面快捷方式;
+2. 首次启动时应用会自动初始化配置目录(`C:\Users\你的用户名\.dsh`),**窗口会晚一点出现,请耐心等待**;
+3. 窗口打开后,点击左侧 **设置(⚙️)** → **模型**,填入你的 **DeepSeek API Key**(没有就到 [platform.deepseek.com](https://platform.deepseek.com) 申请);
+4. 回到会话页,开始使用!
 
-### 绗?4 姝?鏃ュ父浣跨敤
+### 第 4 步:日常使用
 
-| 鎿嶄綔 | 鏂规硶 |
+| 操作 | 方法 |
 |---|---|
-| 鍚姩 | 鍙屽嚮妗岄潰蹇嵎鏂瑰紡 |
-| 鍏抽棴绐楀彛 | 鐐瑰彸涓婅 脳 鈥斺€?搴旂敤**鏈€灏忓寲鍒版墭鐩?*(鍙充笅瑙掑皬鍥炬爣),鍚庡彴缁х画杩愯 |
-| 瀹屽叏閫€鍑?| 鎵樼洏鍥炬爣鍙抽敭 鈫?**閫€鍑?* |
-| 閲嶆柊鎵撳紑 | 鍙屽嚮鎵樼洏鍥炬爣鎴栨闈㈠揩鎹锋柟寮?|
-| 浠庢祻瑙堝櫒鎵撳紑 | 鎵樼洏鍙抽敭 鈫?"鍦ㄦ祻瑙堝櫒涓墦寮€" |
-| **鏇存崲搴旂敤鍥炬爣** | 鎵樼洏鍙抽敭 鈫?**搴旂敤鍥炬爣** 鈫?缁忓吀钃濊壊椴搁奔 / 榛戣壊椴搁奔 / **鑷畾涔夊浘鏍?涓婁紶鍥剧墖)**;涓婁紶鐨勫浘鐗囦細鑷姩瑁佸壀鎴愭柟褰㈠苟閫傞厤鎵€鏈夋闈㈠浘鏍囧昂瀵?绐楀彛銆佹墭鐩樸€佹闈㈠揩鎹锋柟寮忓悓姝ユ洿鏂?|
+| 启动 | 双击桌面快捷方式 |
+| 关闭窗口 | 点右上角 × —— 应用**最小化到托盘**(右下角小图标),后台继续运行 |
+| 完全退出 | 托盘图标右键 → **退出** |
+| 重新打开 | 双击托盘图标或桌面快捷方式 |
+| 从浏览器打开 | 托盘右键 → "在浏览器中打开" |
+| **更换应用图标** | 托盘右键 → **应用图标** → 经典蓝色鲸鱼 / 黑色鲸鱼 / **自定义图标(上传图片)**;上传的图片会自动裁剪成方形并适配所有桌面图标尺寸,窗口、托盘、桌面快捷方式同步更新 |
 
-> 棣栨鍚姩鍙渶涓€娆″垵濮嬪寲;涔嬪悗姣忔鍙屽嚮閮芥槸绉掑紑銆?
+> 首次启动只需一次初始化;之后每次双击都是秒开。
 
-### 甯歌闂(FAQ)
+### 常见问题(FAQ)
 
-**Q: 瀹夎寰堟參?**
-姝ｅ父銆傚畨瑁呭寘 154MB銆佽В鍘嬪悗绾?400MB,涓旀枃浠舵暟閲忓,鏉€姣掕蒋浠朵細閫愪釜鎵弿銆傜瓑 2~10 鍒嗛挓鍗冲彲;瓒呰繃 15 鍒嗛挓鍙皢瀹夎鍖呯洰褰曞姞鍏?Windows Defender 鎺掗櫎椤瑰悗閲嶈瘯銆?
+**Q: 安装很慢?**
+正常。安装包 154MB、解压后约 400MB,且文件数量多,杀毒软件会逐个扫描。等 2~10 分钟即可;超过 15 分钟可将安装包目录加入 Windows Defender 排除项后重试。
 
-**Q: 鎵撳紑鍚庢姤 "Failed to load plugins"?**
-璇烽噸鏂颁笅杞?*鏈€鏂扮増鏈?*瀹夎鍖?鏃х増鏈瓨鍦ㄨ繍琛屾椂鍏煎闂,宸插湪 0.1.0+ 淇)銆傝嫢浠嶆湁闂,鎶婄獥鍙ｄ腑鐨勫畬鏁撮敊璇枃鏈彂缁欏紑鍙戣€呫€?
+**Q: 打开后报 "Failed to load plugins"?**
+请重新下载**最新版本**安装包(旧版本存在运行时兼容问题,已在 0.1.0+ 修复)。若仍有问题,把窗口中的完整错误文本发给开发者。
 
-**Q: 鍙屽嚮娌″弽搴?/ 寮瑰嚭閿欒妗?**
-- 妫€鏌ユ槸鍚﹀凡瀹夎杩囨棫鐗堟湰:璁剧疆 鈫?搴旂敤 鈫?鍗歌浇 "DeepSeek Harness Desktop" 鍚庨噸鏂板畨瑁?
-- 鑻ユ彁绀?鏈壘鍒?dsh 鍛戒护",璇存槑瀹夎鍖呬笉瀹屾暣,璇烽噸鏂颁笅杞?
-- 鎴浘閿欒鍐呭鍙嶉缁欏紑鍙戣€呫€?
+**Q: 双击没反应 / 弹出错误框?**
+- 检查是否已安装过旧版本:设置 → 应用 → 卸载 "DeepSeek Harness Desktop" 后重新安装;
+- 若提示"未找到 dsh 命令",说明安装包不完整,请重新下载;
+- 截图错误内容反馈给开发者。
 
-**Q: 闇€瑕佹瀛愬悧?**
-涓嶉渶瑕併€傚彧鏈夐厤缃?API Key 鍚庤皟鐢?DeepSeek 妯″瀷闇€瑕佽兘璁块棶 DeepSeek API(鍥藉唴鍙洿鎺ヨ闂?銆?
+**Q: 需要梯子吗?**
+不需要。只有配置 API Key 后调用 DeepSeek 模型需要能访问 DeepSeek API(国内可直接访问)。
 
 ---
 
-## 馃洜锔?浜屻€佺粰寮€鍙戣€?浠庢簮鐮佹瀯寤?
+## 🛠️ 二、给开发者:从源码构建
 
-### 鐜瑕佹眰
+### 环境要求
 
-| 宸ュ叿 | 鐗堟湰 | 璇存槑 |
+| 工具 | 版本 | 说明 |
 |---|---|---|
-| Node.js | 鈮?22.19(鎺ㄨ崘 24 LTS) | 鏋勫缓涓庡紑鍙?|
-| npm | 鈮?10 | 闅?Node 瀹夎 |
-| pnpm | 11(鍙€? | 浠呭畨瑁?Codex 鎻掍欢鍒?web profile 鏃堕渶瑕?`corepack enable` 鍙惎鐢?|
-| Git | 浠绘剰 | 鍏嬮殕浠撳簱 |
+| Node.js | ≥ 22.19(推荐 24 LTS) | 构建与开发 |
+| npm | ≥ 10 | 随 Node 安装 |
+| pnpm | 11(可选) | 仅安装 Codex 插件到 web profile 时需要;`corepack enable` 可启用 |
+| Git | 任意 | 克隆仓库 |
 
-### 1. 鍏嬮殕涓庡畨瑁呬緷璧?
+### 1. 克隆与安装依赖
 
 ```bash
 git clone https://github.com/qyqy-1109/deepseek-harness-desktop.git
@@ -83,124 +83,124 @@ cd deepseek-harness-desktop
 npm install
 ```
 
-> 鑻?npm 鎻愮ず electron 鐨?install 鑴氭湰琚嫤鎴?npm 11 鐨?allow-scripts 瀹夊叏鏈哄埗):
+> 若 npm 提示 electron 的 install 脚本被拦截(npm 11 的 allow-scripts 安全机制):
 >
 > ```bash
 > npm approve-scripts electron
 > npm install
 > ```
 
-### 2. 寮€鍙戞ā寮忚繍琛?
+### 2. 开发模式运行
 
 ```bash
 npm start
 ```
 
-鎴栧弻鍑?`鍚姩-妗岄潰鐗?cmd`(鑻辨枃鍚?`launch-desktop.cmd`)銆?
+或双击 `启动-桌面版.cmd`(英文名 `launch-desktop.cmd`)。
 
-搴旂敤鍚姩閫昏緫:
-1. 鎺㈡祴 `http://127.0.0.1:3080` 鈥斺€?宸叉湁 `dsh web` 鍦ㄨ窇鍒欑洿鎺ュ鐢?
-2. 鍚﹀垯鑷姩瑙ｆ瀽骞舵媺璧?`dsh web`(浼樺厛浣跨敤椤圭洰鍐?`vendor/` 鍐呯疆鍓湰,鍏舵 PATH 涓婄殑 `dsh`,鍐嶅叾娆?npm 鍏ㄥ眬瀹夎);
-3. 绐楀彛鍔犺浇 GUI,鎵樼洏甯搁┗銆?
+应用启动逻辑:
+1. 探测 `http://127.0.0.1:3080` —— 已有 `dsh web` 在跑则直接复用;
+2. 否则自动解析并拉起 `dsh web`(优先使用项目内 `vendor/` 内置副本,其次 PATH 上的 `dsh`,再其次 npm 全局安装);
+3. 窗口加载 GUI,托盘常驻。
 
-### 3. 鎵撳寘鑷寘鍚畨瑁呭寘
+### 3. 打包自包含安装包
 
 ```bash
-npm run dist        # 鐢熸垚 dist\DeepSeek Harness Desktop Setup <鐗堟湰>.exe
-npm run dist:portable   # 鎴栦究鎼虹増(鍏嶅畨瑁?
+npm run dist        # 生成 dist\DeepSeek Harness Desktop Setup <版本>.exe
+npm run dist:portable   # 或便携版(免安装)
 ```
 
-鎵撳寘娴佺▼(`scripts/prepare-vendor.mjs` 鑷姩鎵ц):
-1. 鑻ユ湰鏈哄瓨鍦?npm 鍏ㄥ眬瀹夎鐨?`@deepseek-ai/dsh`,鐩存帴澶嶅埗鍏跺畬鏁翠緷璧栨爲鍒?`vendor/`(蹇€熴€佺増鏈簿纭?;
-2. 鍚﹀垯鑷姩 `npm install @deepseek-ai/dsh --prefix vendor` 涓嬭浇;
-3. electron-builder 灏?`vendor/` 浣滀负 extraResources 鎵撹繘瀹夎鍖?`resources/dsh`)銆?
+打包流程(`scripts/prepare-vendor.mjs` 自动执行):
+1. 若本机存在 npm 全局安装的 `@deepseek-ai/dsh`,直接复制其完整依赖树到 `vendor/`(快速、版本精确);
+2. 否则自动 `npm install @deepseek-ai/dsh --prefix vendor` 下载;
+3. electron-builder 将 `vendor/` 作为 extraResources 打进安装包(`resources/dsh`)。
 
-> **鍥藉唴缃戠粶鎻愮ず**:electron-builder 闇€瑕佷粠 GitHub 涓嬭浇 Electron 涓?NSIS 缁勪欢,鍥藉唴鍙兘澶辫触銆傚凡鍐呯疆 Electron 闀滃儚閰嶇疆;鑻?NSIS 缁勪欢涓嬭浇澶辫触,鍦?cmd 涓厛鎵ц:
+> **国内网络提示**:electron-builder 需要从 GitHub 下载 Electron 与 NSIS 组件,国内可能失败。已内置 Electron 镜像配置;若 NSIS 组件下载失败,在 cmd 中先执行:
 >
 > ```bat
 > set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
 > npm run dist
 > ```
 >
-> (璇ョ幆澧冨彉閲忎粎瀵瑰綋鍓?cmd 绐楀彛鏈夋晥銆?
+> (该环境变量仅对当前 cmd 窗口有效。)
 
-### 4. 鐢熸垚搴旂敤鍥炬爣
+### 4. 生成应用图标
 
 ```bash
 node scripts/make-icon.mjs
 ```
 
-鐢熸垚:
-- `assets/icon-blue.png` + `assets/icon-black.png`(杩愯鏃跺唴缃殑涓や釜椴搁奔鍥炬爣,鎵撳寘杩涘簲鐢?;
-- `build/icon.png` + `build/icon.ico`(瀹夎鍖?exe 鐢ㄧ殑钃濊壊椴搁奔鍥炬爣,7 绉嶅昂瀵?銆?
+生成:
+- `assets/icon-blue.png` + `assets/icon-black.png`(运行时内置的两个鲸鱼图标,打包进应用);
+- `build/icon.png` + `build/icon.ico`(安装包/exe 用的蓝色鲸鱼图标,7 种尺寸)。
 
-鍥炬爣婧愪负瀹樻柟 DSH 椴搁奔 logo(鍙栬嚜 GUI 鐨?`/favicon.svg`,瑙?`build/favicon-official.svg`)+ DeepSeek 钃濇笎鍙樺渾瑙掑簳;鑻?`@resvg/resvg-js` 涓嶅彲鐢ㄥ垯鍥為€€鍒板唴缃儚绱犲浘鏍囥€傝繍琛屾椂鏇存崲鍥炬爣(鎵樼洏 鈫?搴旂敤鍥炬爣)浼氱敓鎴愬灏哄 ICO 鍒扮敤鎴风洰褰?`%APPDATA%\dsh-codex-desktop\icons\`銆?
+图标源为官方 DSH 鲸鱼 logo(取自 GUI 的 `/favicon.svg`,见 `build/favicon-official.svg`)+ DeepSeek 蓝渐变圆角底;若 `@resvg/resvg-js` 不可用则回退到内置像素图标。运行时更换图标(托盘 → 应用图标)会生成多尺寸 ICO 到用户目录 `%APPDATA%\dsh-codex-desktop\icons\`。
 
-### 5. 椤圭洰缁撴瀯
+### 5. 项目结构
 
 ```
 dsh-codex-desktop/
-鈹溾攢鈹€ main/
-鈹?  鈹溾攢鈹€ main.js               Electron 涓昏繘绋?鍗曞疄渚嬨€佺獥鍙ｃ€佹墭鐩樸€佺敓鍛藉懆鏈?
-鈹?  鈹斺攢鈹€ dsh-server.mjs        绾?Node 妯″潡:dsh 鍛戒护瑙ｆ瀽 / 鎷夎捣 / 鍋ュ悍鎺㈡祴 / 娓呯悊
-鈹溾攢鈹€ preload.js                preload 妗?闅旂閰嶇疆)
-鈹溾攢鈹€ plugin/dsh-codex-flavor/  DSH client 鎻掍欢:Codex 椋庡懗鐐圭紑(瑙佸叾 README)
-鈹溾攢鈹€ plugin/dsh-background/    DSH client 鎻掍欢:鑳屾櫙鍥剧墖鍥惧簱(瑙佸叾 README)
-鈹溾攢鈹€ scripts/
-鈹?  鈹溾攢鈹€ make-icon.mjs         鍥炬爣鐢熸垚(瀹樻柟椴搁奔)
-鈹?  鈹溾攢鈹€ prepare-vendor.mjs    鎶?dsh 渚濊禆鏍戣杩?vendor/(鎵撳寘鍓嶇疆)
-鈹?  鈹溾攢鈹€ 楠岃瘉骞跺畨瑁?cmd          涓€閿獙璇?瀹夎鎻掍欢鍒?web profile
-鈹?  鈹斺攢鈹€ verify-install.cmd    鍚屼笂(鑻辨枃鍚?
-鈹溾攢鈹€ 鍚姩-妗岄潰鐗?cmd            寮€鍙戞ā寮忓弻鍑诲惎鍔?
-鈹溾攢鈹€ launch-desktop.cmd        鍚屼笂(鑻辨枃鍚?
-鈹斺攢鈹€ build/                    鐢熸垚鐨勫浘鏍?+ 瀹樻柟 favicon 婧愭枃浠?
+├── main/
+│   ├── main.js               Electron 主进程:单实例、窗口、托盘、生命周期
+│   └── dsh-server.mjs        纯 Node 模块:dsh 命令解析 / 拉起 / 健康探测 / 清理
+├── preload.js                preload 桩(隔离配置)
+├── plugin/dsh-codex-flavor/  DSH client 插件:Codex 风味点缀(见其 README)
+├── plugin/dsh-background/    DSH client 插件:背景图片图库(见其 README)
+├── scripts/
+│   ├── make-icon.mjs         图标生成(官方鲸鱼)
+│   ├── prepare-vendor.mjs    把 dsh 依赖树装进 vendor/(打包前置)
+│   ├── 验证并安装.cmd          一键验证+安装插件到 web profile
+│   └── verify-install.cmd    同上(英文名)
+├── 启动-桌面版.cmd            开发模式双击启动
+├── launch-desktop.cmd        同上(英文名)
+└── build/                    生成的图标 + 官方 favicon 源文件
 ```
 
-### 6. 鐜鍙橀噺(鍏ㄩ儴鍙€?
+### 6. 环境变量(全部可选)
 
-| 鍙橀噺 | 榛樿 | 浣滅敤 |
+| 变量 | 默认 | 作用 |
 |---|---|---|
-| `DSH_DESKTOP_PORT` / `DSH_PORT` | `3080` | dsh web 鐩戝惉绔彛 |
-| `DSH_WEB_URL` | `http://127.0.0.1:<port>` | 鐩存帴鎸囧畾 GUI 鍦板潃(璺宠繃鎺㈡祴) |
-| `DSH_BIN` | 鑷姩瑙ｆ瀽 | 鏄惧紡鎸囧畾 dsh 鍙墽琛屾枃浠惰矾寰?|
-| `DSH_DESKTOP_TRAY` | `1` | 璁句负 `0`:鍏抽棴绐楀彛鐩存帴閫€鍑?涓嶉┗鐣欐墭鐩?|
-| `DSH_HOME` | `~/.dsh` | dsh web 鐨勫伐浣滅洰褰?|
+| `DSH_DESKTOP_PORT` / `DSH_PORT` | `3080` | dsh web 监听端口 |
+| `DSH_WEB_URL` | `http://127.0.0.1:<port>` | 直接指定 GUI 地址(跳过探测) |
+| `DSH_BIN` | 自动解析 | 显式指定 dsh 可执行文件路径 |
+| `DSH_DESKTOP_TRAY` | `1` | 设为 `0`:关闭窗口直接退出,不驻留托盘 |
+| `DSH_HOME` | `~/.dsh` | dsh web 的工作目录 |
 
 ---
 
-## 馃帹 涓夈€丆odex 椋庡懗鎻掍欢
+## 🎨 三、Codex 风味插件
 
-`plugin/dsh-codex-flavor/` 鏄竴涓?DSH client 鎻掍欢:鍦?*淇濈暀 DSH 璁捐绯荤粺鍘熸牱**鐨勫墠鎻愪笅,鍙犲姞灏戦噺缁堢璐ㄦ劅:
+`plugin/dsh-codex-flavor/` 是一个 DSH client 插件:在**保留 DSH 设计系统原样**的前提下,叠加少量终端质感:
 
-- 娣辫壊妯″紡涓嬩唬鐮佸潡鍛堣繎榛戠粓绔潰鏉?`#0f1115`)+ 缁嗚竟妗?
-- 浠ｇ爜琛ㄩ潰缁熶竴涓虹紪绋嬬瓑瀹藉瓧浣撴爤(Cascadia Code / JetBrains Mono / ui-monospace);
-- 鎴愬姛/鐘舵€佸己璋冭壊寰皟涓?Codex 缁堢缁?`#3fb950` 绯?;
-- **鍝佺墝钃濄€佸竷灞€銆佸渾瑙掔瓑鍏朵綑鍏ㄩ儴淇濇寔 DSH 鍘熸牱**;鍥涙。閰嶇疆鍙叧銆?
+- 深色模式下代码块呈近黑终端面板(`#0f1115`)+ 细边框;
+- 代码表面统一为编程等宽字体栈(Cascadia Code / JetBrains Mono / ui-monospace);
+- 成功/状态强调色微调为 Codex 终端绿(`#3fb950` 系);
+- **品牌蓝、布局、圆角等其余全部保持 DSH 原样**;四档配置可关。
 
-### 瀹夎鍒?web profile
+### 安装到 web profile
 
 ```bash
 cd plugin/dsh-codex-flavor
-corepack enable          # 鍚敤 pnpm(鑻ュ凡瀹夎鍙烦杩?
+corepack enable          # 启用 pnpm(若已安装可跳过)
 dsh plugin --profile web add .
-dsh --profile web --dump-config | findstr codex   # 纭鍑虹幇 dsh-codex-flavor 灞?
+dsh --profile web --dump-config | findstr codex   # 确认出现 dsh-codex-flavor 层
 ```
 
-鐒跺悗**閲嶅惎 dsh web**(鎻掍欢闆嗗悎鍙樺寲蹇呴』閲嶅惎),鍒锋柊椤甸潰鐢熸晥銆?
+然后**重启 dsh web**(插件集合变化必须重启),刷新页面生效。
 
-### 閰嶇疆
+### 配置
 
-patch 琛岄粯璁ら厤缃?
+patch 行默认配置:
 
 ```yaml
 config:
-  enabled: true          # 鎬诲紑鍏?
-  codexCodeBlocks: true  # 缁堢闈㈡澘璐ㄦ劅浠ｇ爜鍧?
-  codexFont: true        # 浠ｇ爜绛夊瀛椾綋鏍?
-  codexAccent: true      # 鎴愬姛缁垮井璋?
+  enabled: true          # 总开关
+  codexCodeBlocks: true  # 终端面板质感代码块
+  codexFont: true        # 代码等宽字体栈
+  codexAccent: true      # 成功绿微调
 ```
 
-### 鍗歌浇
+### 卸载
 
 ```bash
 dsh plugin --profile web remove dsh-codex-flavor
@@ -208,44 +208,44 @@ dsh plugin --profile web remove dsh-codex-flavor
 
 ---
 
-## 馃帹 鍥涖€佽儗鏅浘鐗囨彃浠?
+## 🎨 四、背景图片插件
 
-`plugin/dsh-background/` 鍦?**璁剧疆 鈫?閫氱敤** 澧炲姞銆岃儗鏅€嶈:
+`plugin/dsh-background/` 在 **设置 → 通用** 增加「背景」行:
 
-- **涓婁紶鍥剧墖** 鈥?涓婁紶鏈湴鍥剧墖,鑷姩鍘嬬缉骞?*淇濆瓨鍒板浘搴?鏈€澶?3 寮?**;鐐瑰嚮缂╃暐鍥惧垏鎹㈠綋鍓嶈儗鏅?`脳` 鍒犻櫎鍗曞紶;
-- **閫忔槑搴?/ 妯＄硦**婊戞潌瀹炴椂璋冭妭鑳屾櫙鏁堟灉;
-- **璺熼殢澶栬** 鈥?娓呴櫎褰撳墠鑳屾櫙;
-- 閫夋嫨鎸佷箙淇濆瓨(localStorage),鍒锋柊/閲嶅惎淇濈暀銆?
+- **上传图片** — 上传本地图片,自动压缩并**保存到图库(最多 3 张)**;点击缩略图切换当前背景,`×` 删除单张;
+- **透明度 / 模糊**滑杆实时调节背景效果;
+- **跟随外观** — 清除当前背景;
+- 选择持久保存(localStorage),刷新/重启保留。
 
-鑳屾櫙浠ュ浐瀹氬眰鏄剧ず鍦ㄤ富鍐呭鍖轰笌渚ц竟鏍忕殑**鍗婇€忔槑搴?*涓?娑堟伅绛夊唴灞傝〃闈繚鎸佷笉閫忔槑浠ヤ繚璇佸彲璇绘€с€?
+背景以固定层显示在主内容区与侧边栏的**半透明底**上,消息等内层表面保持不透明以保证可读性。
 
-瀹夎:
+安装:
 
 ```bash
 cd plugin/dsh-background
-dsh plugin --profile web add -w <鏈洰褰曠粷瀵硅矾寰?   # -w 蹇呴渶(profile 鏄?pnpm workspace 鏍?
+dsh plugin --profile web add -w <本目录绝对路径>   # -w 必需(profile 是 pnpm workspace 根)
 ```
 
-鐒跺悗閲嶅惎 dsh web 鐢熸晥;姝ゅ悗淇敼 `lib/client.js` 鍙渶鍒锋柊椤甸潰銆?
+然后重启 dsh web 生效;此后修改 `lib/client.js` 只需刷新页面。
 
 ---
 
-## 馃И 浜斻€侀獙璇佹竻鍗?
+## 🧪 五、验证清单
 
-- 鎻掍欢:`dsh --profile web --dump-config` 鍑虹幇 `dsh-codex-flavor` 灞?
-- 娴忚鍣ㄥ紑鍙戣€呭伐鍏?鈫?Network 鍙 `/plugins/dsh-codex-flavor/client.js?rev=...` 杩斿洖 200;
-- 娣辨祬鑹插垏鎹㈠悗,娣辫壊妯″紡浠ｇ爜鍧楀憟鐜扮粓绔潰鏉胯川鎰?鍏朵綑鐣岄潰淇濇寔 DSH 鍘熼鏍?
-- 妗岄潰搴旂敤:鏃?`dsh web` 杩愯鏃跺弻鍑诲浘鏍?搴旂敤鑷姩鎷夎捣鏈嶅姟骞舵墦寮€绐楀彛;閫€鍑哄簲鐢ㄥ悗鏈嶅姟涓€骞跺仠姝?浠呴檺搴旂敤鑷繁鎷夎捣鐨勫疄渚?銆?
+- 插件:`dsh --profile web --dump-config` 出现 `dsh-codex-flavor` 层;
+- 浏览器开发者工具 → Network 可见 `/plugins/dsh-codex-flavor/client.js?rev=...` 返回 200;
+- 深浅色切换后,深色模式代码块呈现终端面板质感,其余界面保持 DSH 原风格;
+- 桌面应用:无 `dsh web` 运行时双击图标,应用自动拉起服务并打开窗口;退出应用后服务一并停止(仅限应用自己拉起的实例)。
 
-## 馃檹 鑷磋阿 / Acknowledgements
+## 🙏 致谢 / Acknowledgements
 
-鏈」鐩珯鍦ㄤ互涓嬪紑婧愮煡璇嗕笌椤圭洰涔嬩笂,鐗规鑷磋阿:
+本项目站在以下开源知识与项目之上,特此致谢:
 
-- **[KinGao294/dsh-skin](https://github.com/KinGao294/dsh-skin)** 鈥?鑳屾櫙鍥剧墖鎻掍欢鐨?*鐩存帴鏋舵瀯鑼冩湰**:`ctx.theme.register` 娉ㄥ唽涓婚銆乣ctx.theme.overrideTokens` 鍗婇€忔槑鍖栦富鐢诲竷/渚ц竟鏍忋€乣z-index:-1` 鍥哄畾鑳屾櫙灞傘€乴ocalStorage 鎸佷箙鍖?浠ュ強"绗笁鏂?settings 鍛藉悕绌洪棿涓嶅湪 Host 鐧藉悕鍗?`WEB_SETTINGS_NAMESPACES`)鍐?绛夊钩鍙拌竟鐣岀煡璇?
-- **[deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)** 鈥?DeepSeek Harness 鏈韩:瀹㈡埛绔彃浠跺绾?`dsh.bundle` / `dsh.client` / 鍙岄潰瀵煎嚭)銆乣--dsw-*` 璁捐 token 浣撶郴銆乣__ModuleLoader__` bundle 鏍煎紡銆佽缃Ы浣?`settings.general.item`)绛夊潎浠ュ叾姝ｅ紡鐗堝疄鐜颁负鍑?
-- **[dsh-external/dsh-agent-teams](https://github.com/NanmiCoder/dsh-agent-teams)(鍏紑闀滃儚)** 鈥?鍏?`dsh-plugin-development` 寮€鍙?Skill 鎸囧浜嗘湰椤圭洰鎻掍欢寮€鍙戠殑瀹屾暣娴佺▼(濂戠害銆佸彇璇併€侀獙璇佺煩闃?;
-- **[Electron](https://www.electronjs.org/)** 涓?**[electron-builder](https://www.electron.build/)** 鈥?妗岄潰澹充笌鎵撳寘;**[npmmirror](https://npmmirror.com/)** 鎻愪緵浜嗗浗鍐呭彲鐢ㄧ殑浜岃繘鍒堕暅鍍忋€?
+- **[KinGao294/dsh-skin](https://github.com/KinGao294/dsh-skin)** — 背景图片插件的**直接架构范本**:`ctx.theme.register` 注册主题、`ctx.theme.overrideTokens` 半透明化主画布/侧边栏、`z-index:-1` 固定背景层、localStorage 持久化,以及"第三方 settings 命名空间不在 Host 白名单(`WEB_SETTINGS_NAMESPACES`)内"等平台边界知识;
+- **[deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)** — DeepSeek Harness 本身:客户端插件契约(`dsh.bundle` / `dsh.client` / 双面导出)、`--dsw-*` 设计 token 体系、`__ModuleLoader__` bundle 格式、设置槽位(`settings.general.item`)等均以其正式版实现为准;
+- **[dsh-external/dsh-agent-teams](https://github.com/NanmiCoder/dsh-agent-teams)(公开镜像)** — 其 `dsh-plugin-development` 开发 Skill 指导了本项目插件开发的完整流程(契约、取证、验证矩阵);
+- **[Electron](https://www.electronjs.org/)** 与 **[electron-builder](https://www.electron.build/)** — 桌面壳与打包;**[npmmirror](https://npmmirror.com/)** 提供了国内可用的二进制镜像。
 
-## 馃搫 璁稿彲
+## 📄 许可
 
-MIT銆傚浘鏍囦娇鐢?DeepSeek Harness 瀹樻柟鍝佺墝璧勬簮(鏉ユ簮:GUI `/favicon.svg`,瑙?`build/favicon-official.svg`)銆?
+MIT。图标使用 DeepSeek Harness 官方品牌资源(来源:GUI `/favicon.svg`,见 `build/favicon-official.svg`)。
