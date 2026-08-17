@@ -5,3 +5,4 @@ vendor-node/
 build/icon.png
 build/icon.ico
 *.log
+vendor-agent-presets/
