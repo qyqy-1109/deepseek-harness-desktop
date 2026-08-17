@@ -1,6 +1,6 @@
 {
   "name": "dsh-codex-desktop",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "author": "dsh-codex-desktop",
   "description": "DeepSeek Harness desktop shell (Electron): double-click to launch dsh web in a standalone window, with a subtle Codex-flavored theme plugin.",
@@ -8,12 +8,13 @@
   "main": "main/main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && node scripts/prepare-node.mjs && node scripts/prepare-plugins.mjs && electron-builder --win nsis",
-    "dist:portable": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && node scripts/prepare-node.mjs && node scripts/prepare-plugins.mjs && electron-builder --win portable",
+    "dist": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && node scripts/prepare-node.mjs && node scripts/prepare-plugins.mjs && node scripts/prepare-pnpm.mjs && electron-builder --win nsis",
+    "dist:portable": "node scripts/make-icon.mjs && node scripts/prepare-vendor.mjs && node scripts/prepare-node.mjs && node scripts/prepare-plugins.mjs && node scripts/prepare-pnpm.mjs && electron-builder --win portable",
     "prepare:vendor": "node scripts/prepare-vendor.mjs",
     "prepare:node": "node scripts/prepare-node.mjs",
     "postinstall": "electron-builder install-app-deps",
-    "prepare:plugins": "node scripts/prepare-plugins.mjs"
+    "prepare:plugins": "node scripts/prepare-plugins.mjs",
+    "prepare:pnpm": "node scripts/prepare-pnpm.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
@@ -66,6 +67,10 @@
       {
         "from": "vendor-agent-presets",
         "to": "agent-presets"
+      },
+      {
+        "from": "vendor-pnpm",
+        "to": "pnpm"
       }
     ]
   },

@@ -79,6 +79,15 @@ const BUNDLED_PRESETS_DIR = process.resourcesPath
   ? join(process.resourcesPath, "agent-presets")
   : join(ROOT, "vendor-agent-presets");
 
+/**
+ * Bundled pnpm dir (resources/pnpm). dshmarket and `dsh plugin` spawn `pnpm`
+ * by name, so it must be on PATH of the spawned dsh web server — end-user
+ * machines have no Node/pnpm installed of their own.
+ */
+const BUNDLED_PNPM_DIR = process.resourcesPath
+  ? join(process.resourcesPath, "pnpm")
+  : join(ROOT, "vendor-pnpm");
+
 /** Builtin runtime icons (shipped via assets/**). */
 const BUILTIN_ICONS = {
   blue: join(ROOT, "assets", "icon-blue.png"),
@@ -443,6 +452,18 @@ if (!gotLock) {
       if (!existsSync(CURRENT_ICO())) await materializeCurrentIcon(settings);
     } catch (error) {
       console.warn("[desktop] icon materialization failed:", error.message);
+    }
+    // 0. expose the bundled pnpm (and node dir) on PATH before starting the
+    //    server — its child processes resolve `pnpm` by name.
+    try {
+      if (existsSync(BUNDLED_PNPM_DIR)) {
+        const nodeDir = process.resourcesPath ? join(process.resourcesPath, "node") : join(ROOT, "vendor-node");
+        const extra = [BUNDLED_PNPM_DIR, nodeDir].filter((d) => existsSync(d)).join(";");
+        if (extra) process.env.PATH = `${extra};${process.env.PATH ?? ""}`;
+        bootLog(`bundled tooling on PATH: ${extra}`);
+      }
+    } catch (error) {
+      bootLog(`PATH prepend failed: ${error.message}`);
     }
     // 0.5. seed the bundled plugins into a fresh web profile (before boot)
     try {
