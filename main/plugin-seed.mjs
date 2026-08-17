@@ -96,10 +96,17 @@ export function seedBundledPlugins(pluginsDir, dshHome = process.env.DSH_HOME ??
     mkdirSync(profileDir, { recursive: true });
   }
   const bundles = Array.isArray(manifest.dsh?.profile?.bundles) ? manifest.dsh.profile.bundles : [];
+  const dependencies = manifest.dependencies ?? {};
   let changed = false;
   for (const name of pluginNames) {
     if (!bundles.includes(name)) {
       bundles.push(name);
+      changed = true;
+    }
+    // dshmarket's "已安装" list (and uninstall) reads manifest.dependencies —
+    // record the seeded package there too, pointing at the copied directory.
+    if (dependencies[name] === void 0) {
+      dependencies[name] = `file:./node_modules/${name}`;
       changed = true;
     }
     const srcDir = join(pluginsDir, name);
@@ -107,6 +114,7 @@ export function seedBundledPlugins(pluginsDir, dshHome = process.env.DSH_HOME ??
     if (copyPackage(srcDir, destDir)) seeded.push(name);
   }
   if (changed) {
+    manifest.dependencies = dependencies;
     manifest.dsh = { ...manifest.dsh, profile: { ...manifest.dsh?.profile, bundles } };
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
   }
@@ -131,6 +139,36 @@ export function seedBundledPlugins(pluginsDir, dshHome = process.env.DSH_HOME ??
     } else {
       copyPackage(full, join(profileDir, "node_modules", entry));
     }
+  }
+  return seeded;
+}
+
+/**
+ * Seed bundled agent presets (router-standard / router-spec) into
+ * ~/.dsh/.agent-presets/. DSH discovers a preset as a DIRECT child directory
+ * of the root that contains agent.cordis.yml — so each staged preset dir is
+ * copied next to the root (existing dirs win, never overwritten).
+ * @param presetsDir - the shipped presets dir (resources/agent-presets).
+ * @param dshHome - the Harness home (same fallback as seedBundledPlugins).
+ * @returns the names of presets newly copied.
+ */
+export function seedAgentPresets(presetsDir, dshHome = process.env.DSH_HOME ?? join(homedir(), ".dsh")) {
+  const seeded = [];
+  if (!dshHome || !existsSync(presetsDir)) return seeded;
+  const root = join(dshHome, ".agent-presets");
+  const isDir = (path) => {
+    try {
+      return statSync(path).isDirectory();
+    } catch {
+      return false;
+    }
+  };
+  for (const entry of readdirSync(presetsDir)) {
+    if (entry.startsWith(".")) continue;
+    const srcDir = join(presetsDir, entry);
+    if (!isDir(srcDir)) continue;
+    const destDir = join(root, entry);
+    if (copyPackage(srcDir, destDir)) seeded.push(entry);
   }
   return seeded;
 }

@@ -30,7 +30,7 @@ import {
   waitForServer,
 } from "./dsh-server.mjs";
 import { encodeIco, ICON_SIZES } from "./icon-maker.mjs";
-import { seedBundledPlugins } from "./plugin-seed.mjs";
+import { seedAgentPresets, seedBundledPlugins } from "./plugin-seed.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -70,6 +70,14 @@ const BUNDLED_NODE = process.resourcesPath
 const BUNDLED_PLUGINS_DIR = process.resourcesPath
   ? join(process.resourcesPath, "plugins")
   : join(ROOT, "vendor-plugins", "node_modules");
+
+/**
+ * Path to the agent presets shipped with the installer (extraResources →
+ * resources/agent-presets). Seeded into ~/.dsh/.agent-presets on first boot.
+ */
+const BUNDLED_PRESETS_DIR = process.resourcesPath
+  ? join(process.resourcesPath, "agent-presets")
+  : join(ROOT, "vendor-agent-presets");
 
 /** Builtin runtime icons (shipped via assets/**). */
 const BUILTIN_ICONS = {
@@ -440,8 +448,10 @@ if (!gotLock) {
     try {
       const dshHome = process.env.DSH_HOME ?? join(app.getPath("home"), ".dsh");
       const seeded = seedBundledPlugins(BUNDLED_PLUGINS_DIR, dshHome);
+      const presets = seedAgentPresets(BUNDLED_PRESETS_DIR, dshHome);
       if (seeded.length > 0) bootLog(`seeded bundled plugins: ${seeded.join(", ")}`);
-      else bootLog("plugin seeding: nothing new (already present or no bundled plugins)");
+      if (presets.length > 0) bootLog(`seeded agent presets: ${presets.join(", ")}`);
+      if (seeded.length === 0 && presets.length === 0) bootLog("seeding: nothing new (already present or nothing bundled)");
     } catch (error) {
       bootLog(`plugin seeding failed: ${error.message}`);
       console.warn("[desktop] plugin seeding failed:", error.message);

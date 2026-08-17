@@ -19,6 +19,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const VENDOR = join(ROOT, "vendor-plugins");
 const MANIFEST = join(VENDOR, "package.json");
 
+/** Agent presets staged alongside the plugins (shipped at resources/agent-presets). */
+const PRESET_SOURCE = "D:/deepseek-路由套件/dsh-routing-suite/preset/preset";
+const PRESET_VENDOR = join(ROOT, "vendor-agent-presets");
+
 /** Plugin specs: npm name or file: path. Names must match the web profile's bundles. */
 const PLUGINS = {
   "dshmarket": "^1.4.0",
@@ -97,4 +101,20 @@ if (missing.length > 0) {
   console.error("[prepare-plugins] FAILED, missing:", missing.join(", "));
   process.exit(1);
 }
+
+// stage the agent presets (router-standard / router-spec) for shipping
+if (existsSync(PRESET_SOURCE)) {
+  rmSync(PRESET_VENDOR, { recursive: true, force: true });
+  mkdirSync(PRESET_VENDOR, { recursive: true });
+  let presetCount = 0;
+  for (const entry of readdirSync(PRESET_SOURCE, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    cpSync(join(PRESET_SOURCE, entry.name), join(PRESET_VENDOR, entry.name), { recursive: true });
+    presetCount += 1;
+  }
+  console.log(`[prepare-plugins] staged ${presetCount} agent presets -> vendor-agent-presets/`);
+} else {
+  console.warn("[prepare-plugins] WARNING: preset source missing:", PRESET_SOURCE);
+}
+
 console.log("[prepare-plugins] done:", Object.keys(PLUGINS).length, "plugins staged");
